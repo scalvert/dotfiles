@@ -1,0 +1,18 @@
+cask_args appdir: '/Applications'
+
+tap 'caskroom/cask'
+
+brew 'alfred'
+brew 'brotli'
+brew 'dropbox'
+brew 'fish'
+brew 'fisherman'
+brew 'git'
+brew 'google-chrome'
+brew 'node'
+brew 'phantomjs'
+brew 'slack'
+brew 'spotify'
+brew 'the_silver_searcher'
+brew 'watchman'
+brew 'yarn'
