@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Homebrew Script for OSX
-# To execute: save and `chmod +x ./brew-install-script.sh` then `./brew-install-script.sh`
+# To execute: save and `chmod +x ./setup.sh` then `./setup.sh`
 
 echo "Installing brew..."
 /usr/bin/ruby \
