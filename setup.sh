@@ -1,10 +1,14 @@
 #!/bin/sh
 
 # Homebrew Script for OSX
-# To execute: save and `chmod +x ./brew-install-script.sh` then `./brew-install-script.sh`
+# To execute: save and `chmod +x ./setup.sh` then `./setup.sh`
+
+sudo chown -R $(whoami) /usr/local/Cellar
 
 echo "Installing brew..."
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/usr/bin/ruby \
+	-e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" \
+	</dev/null
 
 echo "Installing brew bundle..."
 brew tap Homebrew/bundle
