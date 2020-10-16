@@ -1,0 +1,37 @@
+### ALIASES ###
+##################
+
+export CLICOLOR=1
+export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+
+alias br='broot'
+alias c='clear'
+alias h='history'
+alias j='jobs -l'
+
+alias mv='mv -i'
+alias cp='cp -i'
+alias ln='ln -i'
+
+alias now='date + "%T"'
+
+alias vi=nvim
+alias vim=nvim
+
+# long list format 
+alias ls='ls -la'
+# hidden files
+alias l.='ls -d .* --color=auto'
+
+# simple ip
+alias ip='ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\ -f2'
+# more details
+alias ip1="ifconfig -a | perl -nle'/(\d+\.\d+\.\d+\.\d+)/ && print $1'"
+# external ip
+alias ip2="curl -s http://www.showmyip.com/simple/ | awk '{print $1}'"
+
+# grep with color
+alias grep='grep --color=auto'
+
+alias ssh-linux='ssh scalvert@scalvert-ld4 -t fish'
+alias chrome-extensions-disabled='open "/Applications/Google Chrome.app" –args –disable-extensions'
