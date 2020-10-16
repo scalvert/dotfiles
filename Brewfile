@@ -1,6 +1,6 @@
 cask_args appdir: '/Applications'
 
-tap 'caskroom/cask'
+tap 'honebrew/cask'
 
 cask 'alfred'
 brew 'brotli'
