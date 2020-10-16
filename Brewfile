@@ -1,6 +1,6 @@
 cask_args appdir: '/Applications'
 
-tap 'caskroom/cask'
+tap 'homebrew/cask'
 
 cask 'alfred'
 brew 'brotli'
@@ -17,3 +17,4 @@ cask 'spotify'
 brew 'the_silver_searcher'
 brew 'watchman'
 brew 'yarn'
+brew 'fx'
