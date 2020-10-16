@@ -15,3 +15,6 @@ brew tap Homebrew/bundle
 
 echo "Executing Brewfile"
 brew bundle
+
+echo "Copying dotfiles"
+cp -r dotfiles/* ~/
