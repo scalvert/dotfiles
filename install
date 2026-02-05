@@ -1,11 +1,147 @@
 #!/bin/bash
+set -e
 
-if [[ ! -f ~/.local/bin/task ]]; then
-  # Install task
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[OK]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Detect platform
+detect_platform() {
+  case "$(uname -s)" in
+    Darwin*) PLATFORM="darwin" ;;
+    Linux*)  PLATFORM="linux" ;;
+    *)       PLATFORM="unknown" ;;
+  esac
+  info "Detected platform: $PLATFORM"
+}
+
+# Install Xcode Command Line Tools (macOS only)
+install_xcode_cli() {
+  if [[ "$PLATFORM" != "darwin" ]]; then
+    return 0
+  fi
+
+  if xcode-select -p &>/dev/null; then
+    success "Xcode CLI tools already installed"
+  else
+    info "Installing Xcode Command Line Tools..."
+    xcode-select --install
+    # Wait for installation to complete
+    until xcode-select -p &>/dev/null; do
+      sleep 5
+    done
+    success "Xcode CLI tools installed"
+  fi
+}
+
+# Install Homebrew
+install_homebrew() {
+  if command -v brew &>/dev/null; then
+    success "Homebrew already installed"
+    return 0
+  fi
+
+  if [[ "$PLATFORM" == "darwin" ]] || [[ "$PLATFORM" == "linux" ]]; then
+    info "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Add Homebrew to PATH for this session
+    if [[ "$PLATFORM" == "darwin" ]]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    fi
+    success "Homebrew installed"
+  else
+    error "Unsupported platform for Homebrew: $PLATFORM"
+    exit 1
+  fi
+}
+
+# Install Task runner
+install_task() {
+  if [[ -f ~/.local/bin/task ]]; then
+    success "Task runner already installed"
+    return 0
+  fi
+
+  info "Installing Task runner..."
   mkdir -p ~/.local/bin
   sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
-fi
+  success "Task runner installed"
+}
 
-export PATH="$PATH:$HOME/.local/bin"
+# Clone dotfiles if running via curl | bash
+clone_dotfiles() {
+  # If we're already in a dotfiles directory with Taskfile, skip
+  if [[ -f "Taskfile.dist.yml" ]]; then
+    return 0
+  fi
 
-task install
+  DOTFILES_DIR="${DOTFILES_DIR:-$HOME/workspace/personal/dotfiles}"
+
+  if [[ -d "$DOTFILES_DIR" ]]; then
+    info "Dotfiles directory already exists at $DOTFILES_DIR"
+    cd "$DOTFILES_DIR"
+  else
+    info "Cloning dotfiles to $DOTFILES_DIR..."
+    mkdir -p "$(dirname "$DOTFILES_DIR")"
+    git clone https://github.com/scalvert/dotfiles.git "$DOTFILES_DIR"
+    cd "$DOTFILES_DIR"
+    success "Dotfiles cloned"
+  fi
+}
+
+# Main installation
+main() {
+  echo ""
+  echo -e "${BLUE}========================================${NC}"
+  echo -e "${BLUE}       Dotfiles Bootstrap Installer     ${NC}"
+  echo -e "${BLUE}========================================${NC}"
+  echo ""
+
+  detect_platform
+
+  # Phase 1: Preflight checks
+  info "Running preflight checks..."
+  install_xcode_cli
+  install_homebrew
+
+  # Phase 2: Install Task runner
+  install_task
+  export PATH="$PATH:$HOME/.local/bin"
+
+  # Phase 3: Clone/navigate to dotfiles
+  clone_dotfiles
+
+  # Phase 4: Run full installation via Task
+  echo ""
+  info "Running dotfiles installation..."
+  echo ""
+
+  task install
+
+  echo ""
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}       Installation Complete!           ${NC}"
+  echo -e "${GREEN}========================================${NC}"
+  echo ""
+  success "Dotfiles have been installed successfully!"
+  echo ""
+  info "Next steps:"
+  echo "  1. Restart your terminal or run: exec fish"
+  echo "  2. Create ~/.config/fish/local.fish for secrets"
+  echo "  3. Run 'task' to see available commands"
+  echo ""
+}
+
+main "$@"

@@ -10,6 +10,14 @@ brew "atuin"
 brew "automake"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
+# A more intuitive version of du in rust
+brew "dust"
+# Disk Usage/Free Utility - a better 'df' alternative
+brew "duf"
+# A modern replacement for ps written in Rust
+brew "procs"
+# Yet another cross-platform graphical process/system monitor
+brew "bottom"
 # User-friendly launcher for Bazel
 brew "bazelisk"
 # GNU internationalization (i18n) and localization (l10n) library

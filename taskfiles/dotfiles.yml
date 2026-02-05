@@ -114,7 +114,7 @@ tasks:
         - "packages/starship/|$HOME/.config/starship"
         - "packages-dist/bash/bashrc|$HOME/.bashrc"
         - "packages-dist/zsh/|$HOME/.zsh"
-        - "packages-dist/fish/|$HOME/.config/fish"
+        - "packages/fish/|$HOME/.config/fish"
         - "packages-dist/zsh/zshenv|$HOME/.zshenv"
         - "packages-dist/zsh/zprofile|$HOME/.zprofile"
         - "packages-dist/zsh/zshrc|$HOME/.zshrc"
@@ -152,6 +152,7 @@ tasks:
         - "packages/tealdeer/config.toml|$HOME/Library/Application Support/tealdeer/config.toml"
         - "packages/jj/|$HOME/Library/Application Support/jj"
         - "packages/alfred/snippets|$HOME/Library/Application Support/Alfred/Alfred.alfredpreferences/snippets"
+        - "packages/iterm2/|$HOME/.config/iterm2"
         #- "packages/alfred/preferences/features|$HOME/Library/Application Support/Alfred/Alfred.alfredpreferences/preferences/features"
     cmds:
       - for:
@@ -161,6 +162,20 @@ tasks:
         vars:
           SRC: '{{splitList "|" .DOTFILE | first}}'
           DEST: '{{splitList "|" .DOTFILE | last}}'
+      - task: utils:configure_iterm2
+
+  utils:configure_iterm2:
+    internal: true
+    platforms: [darwin]
+    silent: true
+    cmds:
+      - |
+        # Configure iTerm2 to load preferences from custom folder
+        if command -v defaults >/dev/null; then
+          defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$HOME/.config/iterm2"
+          defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+          echo "iTerm2 configured to load preferences from ~/.config/iterm2"
+        fi
 
   utils:link_linux_dotfiles:
     internal: true
@@ -184,6 +199,7 @@ tasks:
         - "packages-dist/zsh/zshrc.local|$HOME/.zshrc.local"
         - "packages/git/gitconfig.local|$HOME/.gitconfig.local"
         - "packages/tmux/tmux.local.conf|$HOME/.tmux.local.conf"
+        - "packages/fish/local.fish.template|$HOME/.config/fish/local.fish"
     cmds:
       - for:
           var: COPY_DOTFILES

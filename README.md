@@ -1,6 +1,24 @@
-# rwjblue/dotfiles
+# scalvert/dotfiles
 
-## install
+A modern dotfiles setup for macOS and Linux with seamless bootstrap from a fresh machine.
+
+> **Attribution**: This dotfiles repository is based on [rwjblue/dotfiles](https://github.com/rwjblue/dotfiles) by [Robert Jackson](https://github.com/rwjblue). The original structure, task system, and many configurations come from his excellent work.
+
+## Quick Start
+
+### One-Liner Install (Fresh Machine)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
+```
+
+This will:
+1. Install Xcode CLI tools (macOS)
+2. Install Homebrew
+3. Clone this repository
+4. Run the full installation
+
+### Local Install
 
 ```sh
 ./install
@@ -18,6 +36,8 @@ FORCE=true ./install
 task: Available tasks for this project:
 * install:                Complete system setup - installs dependencies, builds utilities, configures dotfiles, and sets up Neovim
 * binutils:install:       Build binutils and set up symlinks
+* bootstrap:preflight:    Run preflight checks before installation
+* bootstrap:status:       Show current system status
 * brew:cleanup:           Remove unused brew dependencies
 * brew:install:           Install Homebrew and tools defined in Brewfile
 * brew:update:            Update Brewfile with current brew packages and commit changes
@@ -26,17 +46,151 @@ task: Available tasks for this project:
 * nvim:commit:            Commits the lazy-lock.json file if changed
 * nvim:restore:           Restores Neovim plugins to the state in lazy-lock.json
 * nvim:update:            Updates Neovim plugins, CLI utils, and TreeSitter plugins
+* secrets:export:         Export secrets to an encrypted GPG tarball
+* secrets:import:         Import secrets from an encrypted GPG tarball
+* secrets:list:           List files that would be exported
 * shell:update:           Refreshes shell environment by updating startup cache and clearing completion cache
 * system:install:         Install all system dependencies
 ```
 
+## What's Included
+
+### Shell Configuration
+
+- **Fish** (primary) - Modern shell with smart completions
+  - Pure prompt theme
+  - Organized conf.d structure
+  - Modern CLI tool aliases
+- **Zsh** - Fallback configuration
+- **Bash** - Basic configuration
+
+### Modern CLI Tools
+
+| Traditional | Modern | Notes |
+|------------|--------|-------|
+| `ls` | `eza` | Colors, icons, git status |
+| `cat` | `bat` | Syntax highlighting |
+| `find` | `fd` | Faster, simpler |
+| `grep` | `rg` | Respects gitignore |
+| `cd` | `zoxide` | Smart jumping |
+| `du` | `dust` | Visual |
+| `df` | `duf` | Pretty |
+| `ps` | `procs` | Colored |
+| `htop` | `bottom` | Modern TUI (btm) |
+
+See [docs/modern-cli.md](docs/modern-cli.md) for complete reference.
+
+### Terminal Emulators
+
+- **Ghostty** - Fast, GPU-accelerated
+- **WezTerm** - Cross-platform, configurable
+- **iTerm2** - Feature-rich (macOS)
+
+### Editor
+
+- **Neovim** - LazyVim-based configuration
+  - AI integration (Claude, CodeCompanion)
+  - LSP support for many languages
+  - Custom snippets
+
+### Other Tools
+
+- **Git** - Delta for diffs, LFS, filter-repo
+- **tmux** - Terminal multiplexer
+- **Hammerspoon** - macOS automation
+- **Alfred** - Snippets and workflows
+
+## Secrets Management
+
+Export secrets before migrating to a new machine:
+
+```bash
+task secrets:export
+# Creates: secrets-YYYYMMDD.tar.gpg
+```
+
+Import on new machine:
+
+```bash
+task secrets:import -- secrets-20260201.tar.gpg
+```
+
+See [packages/secrets/README.md](packages/secrets/README.md) for details.
+
+## Configuration Files
+
+After installation, create `~/.config/fish/local.fish` for secrets:
+
+```fish
+# API Keys (not tracked in git)
+set -gx AI_CLAUDE_API_KEY "sk-ant-..."
+set -gx GITHUB_TOKEN "ghp_..."
+```
+
+## Documentation
+
+- [Modern CLI Tools](docs/modern-cli.md) - Reference for modern command replacements
+- [Claude Setup](docs/claude-setup.md) - AI tool configuration
+- [Secrets Management](packages/secrets/README.md) - Export/import secrets
+- [iTerm2 Setup](packages/iterm2/README.md) - iTerm2 configuration
+
+## Project Structure
+
+```
+.
+├── install                 # Bootstrap installer
+├── Brewfile                # Homebrew packages
+├── Taskfile.dist.yml       # Task runner config
+├── taskfiles/              # Task definitions
+│   ├── bootstrap.yml       # Preflight checks
+│   ├── brew.yml            # Homebrew tasks
+│   ├── dotfiles.yml        # Dotfile linking
+│   ├── nvim.yml            # Neovim tasks
+│   ├── secrets.yml         # Secrets management
+│   └── ...
+├── packages/               # Configuration packages
+│   ├── fish/               # Fish shell config
+│   │   ├── config.fish
+│   │   ├── conf.d/         # Modular config files
+│   │   ├── functions/      # Custom functions
+│   │   └── completions/    # Custom completions
+│   ├── nvim/               # Neovim config
+│   ├── git/                # Git config
+│   ├── tmux/               # tmux config
+│   ├── iterm2/             # iTerm2 profiles
+│   ├── secrets/            # Export/import scripts
+│   ├── claude/             # Claude Code templates
+│   ├── mcp/                # MCP server config
+│   └── ...
+└── docs/                   # Documentation
+```
+
 ## Troubleshooting
 
-To ensure Neovim supports strikethrough and undercurl support, follow [these instructions](https://wezfurlong.org/wezterm/faq.html#how-do-i-enable-undercurl-curly-underlines).
+### Neovim Strikethrough/Undercurl Support
 
-## Inspiration
+Follow [these instructions](https://wezfurlong.org/wezterm/faq.html#how-do-i-enable-undercurl-curly-underlines) for terminal compatibility.
 
-This dotfiles repository was inspired by:
+### Fish Shell Not Loading
+
+1. Check symlink: `ls -la ~/.config/fish`
+2. Verify local.fish exists: `cat ~/.config/fish/local.fish`
+3. Reload: `exec fish`
+
+### GPG Agent Issues
+
+```bash
+gpgconf --kill gpg-agent
+gpgconf --launch gpg-agent
+```
+
+## Credits & Inspiration
+
+This dotfiles repository is forked from and heavily based on:
+
+- **[rwjblue/dotfiles](https://github.com/rwjblue/dotfiles)** by [Robert Jackson](https://github.com/rwjblue) - The foundation for this entire setup, including the task-based architecture, package structure, and most configurations.
+
+Additional inspiration from:
 
 - [hjdivad/dotfiles](https://github.com/hjdivad/dotfiles)
 - [dkarter/dotfiles](https://github.com/dkarter/dotfiles)

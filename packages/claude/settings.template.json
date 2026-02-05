@@ -1,0 +1,62 @@
+{
+  "$schema": "https://claude.ai/settings-schema.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+      "Bash(node:*)",
+      "Bash(cargo:*)",
+      "Bash(rustc:*)",
+      "Bash(go:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(jj:*)",
+      "Bash(task:*)",
+      "Bash(mise:*)",
+      "Bash(brew:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(fd:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(which:*)",
+      "Bash(echo:*)",
+      "Bash(pwd:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(diff:*)",
+      "Bash(date:*)",
+      "Bash(env:*)",
+      "Bash(export:*)",
+      "Bash(source:*)",
+      "Bash(make:*)",
+      "Bash(cmake:*)",
+      "Bash(bazel:*)"
+    ],
+    "deny": []
+  },
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch", "--ignore-robots-txt"]
+    },
+    "package-version": {
+      "command": "npx",
+      "args": ["-y", "mcp-package-version"]
+    }
+  }
+}

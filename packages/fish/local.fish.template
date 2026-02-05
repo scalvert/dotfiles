@@ -1,0 +1,14 @@
+# Local Fish Configuration - NOT TRACKED IN GIT
+# Copy this file to ~/.config/fish/local.fish and add your secrets
+
+# API Keys and Tokens (replace with your actual values)
+# set -gx AI_CLAUDE_API_KEY "sk-ant-..."
+# set -gx GITHUB_TOKEN "ghp_..."
+# set -gx AI_GROK_API_KEY "..."
+# set -gx AI_OPEN_AI_API_KEY "sk-..."
+
+# Machine-specific configuration
+# set -gx SOME_LOCAL_PATH "/path/specific/to/this/machine"
+
+# Local aliases or overrides
+# alias myalias 'my-local-command'

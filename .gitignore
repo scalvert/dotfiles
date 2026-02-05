@@ -13,3 +13,15 @@ packages/wezterm/local_config_overrides.lua
 # this is unstable across machines
 /packages/hammerspoon/Spoons/EmmyLua.spoon/annotations/timestamps.json
 
+# Local fish config with secrets
+packages/fish/local.fish
+
+# Secrets exports (encrypted tarballs)
+secrets-*.tar.gpg
+*.secrets.tar.gpg
+
+# Local environment files
+.env
+.env.local
+.envrc.local
+

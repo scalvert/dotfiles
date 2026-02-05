@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: 3
+
+tasks:
+  preflight:
+    desc: Run preflight checks before installation
+    summary: |
+      Verifies that the system meets the requirements for dotfiles installation:
+      - Xcode CLI tools are installed (macOS)
+      - Homebrew is available
+      - Required directories exist
+    cmds:
+      - task: check:xcode
+      - task: check:homebrew
+      - task: check:directories
+
+  check:xcode:
+    internal: true
+    platforms: [darwin]
+    silent: true
+    cmds:
+      - |
+        if xcode-select -p &>/dev/null; then
+          echo "Xcode CLI tools: OK"
+        else
+          echo "Xcode CLI tools: MISSING"
+          echo "Run: xcode-select --install"
+          exit 1
+        fi
+
+  check:homebrew:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        if command -v brew &>/dev/null; then
+          echo "Homebrew: OK ($(brew --version | head -1))"
+        else
+          echo "Homebrew: MISSING"
+          echo "Run: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+          exit 1
+        fi
+
+  check:directories:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        echo "Checking required directories..."
+        for dir in ~/.local/bin ~/.config ~/.ssh; do
+          if [ -d "$dir" ]; then
+            echo "  $dir: OK"
+          else
+            echo "  $dir: Creating..."
+            mkdir -p "$dir"
+          fi
+        done
+
+  status:
+    desc: Show current system status
+    summary: |
+      Displays the current status of the dotfiles installation
+    cmds:
+      - task: status:platform
+      - task: status:tools
+      - task: status:shell
+
+  status:platform:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        echo "=== Platform ==="
+        echo "OS: $(uname -s)"
+        echo "Arch: $(uname -m)"
+        echo "Host: $(hostname)"
+
+  status:tools:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        echo ""
+        echo "=== Tools ==="
+        check_tool() {
+          if command -v "$1" &>/dev/null; then
+            echo "$1: $($1 --version 2>&1 | head -1)"
+          else
+            echo "$1: not installed"
+          fi
+        }
+        check_tool brew
+        check_tool git
+        check_tool fish
+        check_tool nvim
+        check_tool task
+
+  status:shell:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        echo ""
+        echo "=== Shell ==="
+        echo "Current: $SHELL"
+        echo "Fish path: $(which fish 2>/dev/null || echo 'not found')"
+        if [ -f ~/.config/fish/config.fish ]; then
+          echo "Fish config: ~/.config/fish/config.fish"
+        else
+          echo "Fish config: not found"
+        fi

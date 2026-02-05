@@ -5,6 +5,9 @@ includes:
   binutils:
     taskfile: ./taskfiles/binutils.yml
 
+  bootstrap:
+    taskfile: ./taskfiles/bootstrap.yml
+
   brew:
     taskfile: ./taskfiles/brew.yml
 
@@ -18,6 +21,9 @@ includes:
 
   nvim:
     taskfile: ./taskfiles/nvim.yml
+
+  secrets:
+    taskfile: ./taskfiles/secrets.yml
 
   shell:
     taskfile: ./taskfiles/shell.yml
