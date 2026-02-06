@@ -1,11 +1,21 @@
 # Local Fish Configuration - NOT TRACKED IN GIT
 # Copy this file to ~/.config/fish/local.fish and add your secrets
 
-# API Keys and Tokens (replace with your actual values)
+# Claude API Key (required for Neovim AI plugins)
 # set -gx AI_CLAUDE_API_KEY "sk-ant-..."
-# set -gx GITHUB_TOKEN "ghp_..."
+
+# Vertex AI (if using Google Cloud for Claude)
+# set -gx CLAUDE_CODE_USE_VERTEX 1
+# set -gx CLOUD_ML_REGION us-east5
+# set -gx ANTHROPIC_VERTEX_PROJECT_ID your-project-id
+
+# Other AI providers (optional)
 # set -gx AI_GROK_API_KEY "..."
 # set -gx AI_OPEN_AI_API_KEY "sk-..."
+
+# GitHub: Use `gh auth token` dynamically instead of storing tokens
+# Example: GITHUB_TOKEN=(gh auth token) some-command
+# The release-it alias already does this
 
 # Machine-specific configuration
 # set -gx SOME_LOCAL_PATH "/path/specific/to/this/machine"
