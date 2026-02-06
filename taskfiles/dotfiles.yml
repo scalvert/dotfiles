@@ -196,10 +196,8 @@ tasks:
     internal: true
     vars:
       COPY_DOTFILES:
-        - "packages-dist/zsh/zshrc.local|$HOME/.zshrc.local"
         - "packages/git/gitconfig.local|$HOME/.gitconfig.local"
         - "packages/tmux/tmux.local.conf|$HOME/.tmux.local.conf"
-        - "packages/fish/local.fish.template|$HOME/.config/fish/local.fish"
     cmds:
       - for:
           var: COPY_DOTFILES
