@@ -110,14 +110,9 @@ tasks:
     vars:
       DOTFILES:
         - "packages/nvim|$HOME/.config/nvim"
-        - "packages-dist/starship/jj.toml|$HOME/.config/starship.toml"
+        - "packages/starship/pure.toml|$HOME/.config/starship.toml"
         - "packages/starship/|$HOME/.config/starship"
-        - "packages-dist/bash/bashrc|$HOME/.bashrc"
-        - "packages-dist/zsh/|$HOME/.zsh"
         - "packages/fish/|$HOME/.config/fish"
-        - "packages-dist/zsh/zshenv|$HOME/.zshenv"
-        - "packages-dist/zsh/zprofile|$HOME/.zprofile"
-        - "packages-dist/zsh/zshrc|$HOME/.zshrc"
         - "packages/atuin|$HOME/.config/atuin"
         - "packages/git/gitconfig|$HOME/.gitconfig"
         - "packages/git/gitignore_global|$HOME/.gitignore_global"
