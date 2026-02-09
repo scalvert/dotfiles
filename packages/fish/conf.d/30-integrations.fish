@@ -1,6 +1,11 @@
 # Tool Integrations
 # External tool initialization and hooks
 
+# Starship prompt
+if command -v starship >/dev/null
+    starship init fish | source
+end
+
 # Homebrew
 if test -f /opt/homebrew/share/fish/vendor_conf.d/homebrew.fish
     source /opt/homebrew/share/fish/vendor_conf.d/homebrew.fish

@@ -1,0 +1,31 @@
+# Pure-style prompt for starship
+# Mimics the pure-fish/pure prompt
+
+format = """
+$directory$git_branch$git_status
+$character"""
+
+[directory]
+style = "blue"
+truncation_length = 3
+truncate_to_repo = false
+
+[git_branch]
+format = " [$branch]($style)"
+style = "gray"
+
+[git_status]
+format = "[$all_status$ahead_behind]($style)"
+style = "yellow"
+modified = "*"
+staged = "+"
+untracked = "?"
+deleted = "-"
+renamed = "»"
+ahead = "⇡"
+behind = "⇣"
+diverged = "⇕"
+
+[character]
+success_symbol = "[❯](purple)"
+error_symbol = "[❯](red)"
