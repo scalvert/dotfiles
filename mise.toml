@@ -95,6 +95,10 @@ run = "./scripts/ai-stack review"
 description = "Run AI stack review plus managed skill drift checks"
 run = "./scripts/ai-stack feedback"
 
+[tasks."ai:archive:plan"]
+description = "Write a local archive/consolidation plan for skills and commands"
+run = "./scripts/ai-stack archive-plan"
+
 [tasks."ai:report"]
 description = "Write a dated AI stack review report under packages/ai/reviews"
 run = "./scripts/ai-stack report"

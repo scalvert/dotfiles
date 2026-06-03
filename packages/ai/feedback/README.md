@@ -24,9 +24,12 @@ Preferred command:
 
 ```bash
 mise run ai:feedback
+mise run ai:archive:plan
 ```
 
 Use `mise run ai:skill:drift` to compare the live managed-skill lockfile against the local generated `packages/ai/skills/managed-lock.snapshot.tsv`. Treat missing local directories, missing upstream hashes, or local content hash changes as review items, not automatic delete signals.
+
+`mise run ai:archive:plan` writes a local review artifact under `${XDG_STATE_HOME:-~/.local/state}/ai-stack/archive-plans`. It should contain names and recommendations only. Do not commit it unless it has been manually reviewed and sanitized.
 
 ## Rules
 
