@@ -42,6 +42,11 @@ tasks:
     cmds:
       - ./scripts/ai-stack usage-report
 
+  prompt:plan:
+    desc: Write a local prompt improvement recommendation plan
+    cmds:
+      - ./scripts/ai-stack prompt-plan
+
   archive:plan:
     desc: Write a local archive/consolidation plan for skills and commands
     cmds:

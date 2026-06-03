@@ -103,6 +103,10 @@ run = "./scripts/ai-stack usage"
 description = "Write a local names-only usage age report"
 run = "./scripts/ai-stack usage-report"
 
+[tasks."ai:prompt:plan"]
+description = "Write a local prompt improvement recommendation plan"
+run = "./scripts/ai-stack prompt-plan"
+
 [tasks."ai:archive:plan"]
 description = "Write a local archive/consolidation plan for skills and commands"
 run = "./scripts/ai-stack archive-plan"

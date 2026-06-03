@@ -26,10 +26,13 @@ Preferred command:
 mise run ai:feedback
 mise run ai:usage
 mise run ai:usage:report
+mise run ai:prompt:plan
 mise run ai:archive:plan
 ```
 
 `mise run ai:usage` prints a names-only age table for installed skills and command shims. `mise run ai:usage:report` writes the same kind of signal to `${XDG_STATE_HOME:-~/.local/state}/ai-stack/usage`. File age is a stale-review signal, not proof that something is unused.
+
+`mise run ai:prompt:plan` writes prompt improvement recommendations under `${XDG_STATE_HOME:-~/.local/state}/ai-stack/prompt-plans`. It should contain candidate prompt names and proposed edits only; do not commit it unless it has been manually reviewed and sanitized.
 
 Use `mise run ai:skill:drift` to compare the live managed-skill lockfile against the local generated `packages/ai/skills/managed-lock.snapshot.tsv`. Treat missing local directories, missing upstream hashes, or local content hash changes as review items, not automatic delete signals.
 
