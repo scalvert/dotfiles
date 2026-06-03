@@ -38,6 +38,10 @@ packages/ai/
 Prompt files under `prompts/` must include frontmatter with `id`, `status`,
 `source`, and `clients`. The `id` must match the filename.
 
+Command specs under `commands/` must include a numeric `version` and a non-empty
+`commands` array with unique kebab-case ids and all fields needed by the
+generator.
+
 ## Completion Audit
 
 Run the ongoing goal audit:

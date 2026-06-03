@@ -16,6 +16,23 @@ validate() {
     jq empty "$ai_dir/mcp/servers.json"
     find "$ai_dir/commands" -type f -name '*.json' -print | while read -r spec; do
       jq empty "$spec"
+      jq -e '
+        (.version | type == "number") and
+        (.commands | type == "array") and
+        (.commands | length > 0) and
+        (all(.commands[]; (
+          (.id | type == "string" and test("^[a-z0-9][a-z0-9-]*$")) and
+          (.description | type == "string" and length > 0) and
+          (.title | type == "string" and length > 0) and
+          (.shell | type == "string" and length > 0) and
+          (.task | type == "string" and length > 0) and
+          (.opencodeMessage | type == "string" and length > 0)
+        ))) and
+        (([.commands[].id] | length) == ([.commands[].id] | unique | length))
+      ' "$spec" >/dev/null || {
+        echo "invalid command spec shape: $spec" >&2
+        exit 1
+      }
     done
     find "$ai_dir/generated/mcp" -type f \( -name '*.json' -o -name '*.jsonc' \) -print 2>/dev/null | while read -r generated_mcp; do
       jq empty "$generated_mcp"
@@ -279,6 +296,7 @@ completion_audit() {
   audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
 
   audit_path "$ai_dir/commands/plannotator.json" "Canonical command specs exist" "packages/ai/commands/plannotator.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/commands/README.md" "Command spec representation is documented" "packages/ai/commands/README.md" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/commands/claude/plannotator-review.md" "Generated Claude command shims exist" "packages/ai/generated/commands/claude" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/commands/codex/plannotator-review.md" "Generated Codex command shims exist" "packages/ai/generated/commands/codex" || missing=$((missing + 1))
   audit_path "$ai_dir/mcp/servers.json" "Canonical MCP catalog exists" "packages/ai/mcp/servers.json" || missing=$((missing + 1))
