@@ -10,6 +10,7 @@ Current policy:
 - Keep project-specific skills in the project unless they are reused across projects.
 - Archive retired skills before deletion.
 - Generate managed-skill lock metadata locally in `managed-lock.snapshot.tsv`; use drift reports to decide whether to update, reinstall, archive, or remove stale lock entries.
+- Repo-owned canonical skill packages whose manifest target is `packages/ai/skills/<id>` must include `SKILL.md`.
 
 Preferred skill shape:
 

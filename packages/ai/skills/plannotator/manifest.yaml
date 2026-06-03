@@ -19,6 +19,7 @@ target:
 generated_artifacts:
   command_spec: packages/ai/commands/plannotator.json
   output_dir: packages/ai/generated/commands
+canonical_body: packages/ai/skills/plannotator/SKILL.md
 decision:
   keep: workflow concepts and reviewed skill content
   consolidate: duplicate client-specific command and skill copies

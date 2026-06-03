@@ -36,12 +36,17 @@ validate() {
   done
 
   find "$ai_dir/skills" -mindepth 2 -maxdepth 2 -name manifest.yaml -print | while read -r manifest; do
+    skill_dir="$(dirname "$manifest")"
     if ! grep -q '^id:' "$manifest"; then
       echo "missing id in $manifest" >&2
       exit 1
     fi
     if ! grep -q '^status:' "$manifest"; then
       echo "missing status in $manifest" >&2
+      exit 1
+    fi
+    if grep -q '^  path: packages/ai/skills/' "$manifest" && [[ ! -f "$skill_dir/SKILL.md" ]]; then
+      echo "missing SKILL.md for repo-owned skill: $skill_dir" >&2
       exit 1
     fi
   done
@@ -246,6 +251,7 @@ completion_audit() {
   audit_grep 'Keep `scalvert/dotfiles` as the foundation' "$repo_root/docs/ai-stack.md" "Foundation decision is explicit" "docs/ai-stack.md decision section" || missing=$((missing + 1))
   audit_grep 'packages/ai/skills/<id>/' "$repo_root/docs/ai-stack.md" "Skill representation is documented" "docs/ai-stack.md skill representation section" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/manifest.yaml" "Skill manifests exist for canonical skills" "packages/ai/skills/*/manifest.yaml" || missing=$((missing + 1))
+  audit_path "$ai_dir/skills/plannotator/SKILL.md" "Repo-owned canonical skill body exists" "packages/ai/skills/plannotator/SKILL.md" || missing=$((missing + 1))
   audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
 
   audit_path "$ai_dir/commands/plannotator.json" "Canonical command specs exist" "packages/ai/commands/plannotator.json" || missing=$((missing + 1))
