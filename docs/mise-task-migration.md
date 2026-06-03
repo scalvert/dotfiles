@@ -54,6 +54,7 @@ mise run mise:outdated
 ```
 
 The go-task files still exist as compatibility while the rest of the migration is staged.
+Claude's default permission template and active zsh completion path no longer advertise `task`.
 
 Mise requires project configs to be trusted before running tasks. For one-off validation without writing trust state, set `MISE_TRUSTED_CONFIG_PATHS` to the checkout path.
 
@@ -84,6 +85,7 @@ Mise requires project configs to be trusted before running tasks. For one-off va
 
 8. Retire go-task
    - Delete `Taskfile.dist.yml` and `taskfiles/` only after `mise tasks ls`, `mise run install`, reset flows, and fresh-machine bootstrap have been verified.
+   - Archived active shell completion assets before deleting them from the live completion path.
 
 ## Cutover Rule
 

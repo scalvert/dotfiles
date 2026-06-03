@@ -5,5 +5,8 @@ installed via Homebrew. The Homebrew package completions are already handled
 automatically as part of the Homebrew installation process (along with a custom
 `fpath` that is added by prezto/completions module).
 
-Right now, this means `rustup`, `cargo`, and `go-task` completions only
-(because those are all installed outside of Homebrew)..
+Right now, this means `rustup` and `cargo` completions only because those are
+installed outside of Homebrew.
+
+The old go-task completion was archived under `archive/go-task/` when mise
+became the primary task runner.

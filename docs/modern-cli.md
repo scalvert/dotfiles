@@ -123,7 +123,7 @@ tldr --update   # Update local cache
 All tools are installed via Homebrew:
 
 ```bash
-task brew:install
+mise run brew:install
 ```
 
 Or install individually:

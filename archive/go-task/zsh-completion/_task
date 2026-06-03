@@ -1,0 +1,2 @@
+# Archived: go-task is no longer part of the primary dotfiles task runner.
+# CMD_SILENT: task --completion zsh
