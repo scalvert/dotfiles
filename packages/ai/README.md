@@ -35,6 +35,9 @@ packages/ai/
 4. Secrets stay in local files, keychains, or app-owned auth stores.
 5. Project-specific behavior belongs in the project unless it is broadly reusable.
 
+Prompt files under `prompts/` must include frontmatter with `id`, `status`,
+`source`, and `clients`. The `id` must match the filename.
+
 ## Completion Audit
 
 Run the ongoing goal audit:

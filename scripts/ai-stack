@@ -27,10 +27,32 @@ validate() {
     exit 1
   fi
 
-  find "$ai_dir/prompts" -type f -name '*.md' -print | while read -r prompt; do
+  find "$ai_dir/prompts" -type f -name '*.md' ! -name 'README.md' -print | while read -r prompt; do
+    local first_line prompt_id
     first_line="$(head -n 1 "$prompt")"
+    prompt_id="$(basename "$prompt" .md)"
     if [[ "$first_line" != "---" ]]; then
       echo "missing frontmatter: $prompt" >&2
+      exit 1
+    fi
+    if [[ "$(awk '/^---$/ { count++ } END { print count + 0 }' "$prompt")" -lt 2 ]]; then
+      echo "unterminated frontmatter: $prompt" >&2
+      exit 1
+    fi
+    if ! grep -q "^id: $prompt_id$" "$prompt"; then
+      echo "prompt id must match filename: $prompt" >&2
+      exit 1
+    fi
+    if ! grep -Eq '^status: (keep|consolidate|archive)$' "$prompt"; then
+      echo "prompt missing valid status: $prompt" >&2
+      exit 1
+    fi
+    if ! grep -q '^source: ' "$prompt"; then
+      echo "prompt missing source: $prompt" >&2
+      exit 1
+    fi
+    if ! grep -q '^clients:$' "$prompt"; then
+      echo "prompt missing clients list: $prompt" >&2
       exit 1
     fi
   done
@@ -250,6 +272,8 @@ completion_audit() {
   audit_path "$repo_root/docs/ai-stack.md" "Target architecture is documented" "docs/ai-stack.md" || missing=$((missing + 1))
   audit_grep 'Keep `scalvert/dotfiles` as the foundation' "$repo_root/docs/ai-stack.md" "Foundation decision is explicit" "docs/ai-stack.md decision section" || missing=$((missing + 1))
   audit_grep 'packages/ai/skills/<id>/' "$repo_root/docs/ai-stack.md" "Skill representation is documented" "docs/ai-stack.md skill representation section" || missing=$((missing + 1))
+  audit_path "$ai_dir/prompts/README.md" "Prompt representation is documented" "packages/ai/prompts/README.md" || missing=$((missing + 1))
+  audit_path "$ai_dir/prompts/commit-message.md" "Canonical prompt source exists" "packages/ai/prompts/commit-message.md" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/manifest.yaml" "Skill manifests exist for canonical skills" "packages/ai/skills/*/manifest.yaml" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/SKILL.md" "Repo-owned canonical skill body exists" "packages/ai/skills/plannotator/SKILL.md" || missing=$((missing + 1))
   audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
