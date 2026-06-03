@@ -22,4 +22,13 @@ Do not commit:
 - private company URLs or internal repository names
 
 Copy `TEMPLATE.md` to a dated file after a real verification run. The
-completion audit only treats a non-template file with `result: pass` as proof.
+completion audit only treats a non-template file as proof when it includes:
+
+- `date: YYYY-MM-DD` with a real date
+- `result: pass`
+- `platform: darwin` or `platform: linux`
+- `arch: arm64` or `arch: x86_64`
+- `dotfiles_commit: SHORT_SHA` replaced with a real 7-40 character commit SHA
+- `environment: fresh-machine`, `environment: disposable-vm`, or `environment: clean-user`
+- `verified_by: steve`
+- the required command list from `TEMPLATE.md`

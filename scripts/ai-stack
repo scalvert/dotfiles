@@ -174,6 +174,34 @@ audit_mise_task() {
   fi
 }
 
+valid_bootstrap_verification_record() {
+  local record="$1"
+  local required_command
+
+  grep -Eq '^date: [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$record" || return 1
+  grep -q '^result: pass$' "$record" || return 1
+  grep -Eq '^platform: (darwin|linux)$' "$record" || return 1
+  grep -Eq '^arch: (arm64|x86_64)$' "$record" || return 1
+  grep -Eq '^dotfiles_commit: [0-9a-f]{7,40}$' "$record" || return 1
+  grep -Eq '^environment: (fresh-machine|disposable-vm|clean-user)$' "$record" || return 1
+  grep -Eq '^verified_by: [A-Za-z0-9._-]+$' "$record" || return 1
+
+  if grep -Eq 'YYYY-MM-DD|SHORT_SHA|darwin\|linux|arm64\|x86_64|fresh-machine\|disposable-vm\|clean-user' "$record"; then
+    return 1
+  fi
+
+  for required_command in \
+    'curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash' \
+    'mise run ai:validate' \
+    'mise run ai:doctor' \
+    'mise run ai:completion:audit' \
+    'mise run migration:go-task:retire-check' \
+    'mise run ai:reset:dry-run' \
+    'mise run reset:dry-run'; do
+    grep -Fq "$required_command" "$record" || return 1
+  done
+}
+
 bootstrap_verification_record() {
   local verification_dir="$ai_dir/bootstrap-verifications"
 
@@ -181,12 +209,14 @@ bootstrap_verification_record() {
     return 1
   fi
 
-  find "$verification_dir" -maxdepth 1 -type f -name '*.md' ! -name 'README.md' ! -name 'TEMPLATE.md' -print | sort | while read -r record; do
-    if grep -q '^result: pass$' "$record"; then
+  while read -r record; do
+    if valid_bootstrap_verification_record "$record"; then
       printf '%s\n' "$record"
       return 0
     fi
-  done
+  done < <(find "$verification_dir" -maxdepth 1 -type f -name '*.md' ! -name 'README.md' ! -name 'TEMPLATE.md' -print | sort)
+
+  return 1
 }
 
 completion_audit() {
