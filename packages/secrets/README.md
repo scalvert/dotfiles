@@ -16,14 +16,14 @@ Tools for securely exporting and importing secrets between machines.
 Export all secrets to an encrypted tarball:
 
 ```bash
-task secrets:export
+mise run secrets:export
 # Creates: secrets-YYYYMMDD.tar.gpg
 ```
 
 Or specify a custom output file:
 
 ```bash
-task secrets:export -- my-secrets.tar.gpg
+mise run secrets:export -- my-secrets.tar.gpg
 ```
 
 ### Import Secrets
@@ -31,7 +31,7 @@ task secrets:export -- my-secrets.tar.gpg
 Import secrets on a new machine:
 
 ```bash
-task secrets:import -- secrets-20260201.tar.gpg
+mise run secrets:import -- secrets-20260201.tar.gpg
 ```
 
 ## Security

@@ -27,6 +27,7 @@ Native mise tasks now exist for:
 - `reset:dry-run`
 - `shell:update`
 - `nvim:*`
+- `secrets:*`
 - `mise:install`
 - `mise:update`
 - `mise:outdated`
@@ -47,6 +48,7 @@ mise run ai:archive:plan
 mise run ai:report
 mise run ai:generate:mcp
 mise run ai:diff:mcp
+mise run secrets:list
 mise run reset:dry-run
 mise run mise:outdated
 ```
@@ -75,7 +77,7 @@ Mise requires project configs to be trusted before running tasks. For one-off va
 
 6. Neovim/secrets tasks
    - Neovim tasks are migrated through `scripts/nvim`.
-   - Secrets tasks still need migration.
+   - Secrets tasks are migrated through `scripts/secrets`.
 
 7. Bootstrap installer
    - Migrated: install Homebrew and mise first, then run `mise run install`.

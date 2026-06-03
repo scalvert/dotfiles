@@ -141,5 +141,5 @@ set -gx AI_CLAUDE_API_KEY "sk-ant-..."
 
 - **Never commit API keys** to version control
 - Use `~/.config/fish/local.fish` for secrets (gitignored)
-- Export secrets using `task secrets:export` for backup
+- Export secrets using `mise run secrets:export` for backup
 - Rotate API keys periodically

@@ -121,14 +121,14 @@ See [docs/modern-cli.md](docs/modern-cli.md) for complete reference.
 Export secrets before migrating to a new machine:
 
 ```bash
-task secrets:export
+mise run secrets:export
 # Creates: secrets-YYYYMMDD.tar.gpg
 ```
 
 Import on new machine:
 
 ```bash
-task secrets:import -- secrets-20260201.tar.gpg
+mise run secrets:import -- secrets-20260201.tar.gpg
 ```
 
 See [packages/secrets/README.md](packages/secrets/README.md) for details.
