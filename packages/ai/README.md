@@ -49,6 +49,10 @@ Run strict mode only when the full consolidation goal should be complete:
 mise run ai:completion:audit:strict
 ```
 
+Fresh-machine bootstrap verification records live in
+`bootstrap-verifications/`. Copy the template after a real test run; the audit
+does not count the template itself as proof.
+
 ## MCP
 
 `mcp/servers.json` contains only public-safe stdio servers. Private HTTP MCP servers, auth headers, and company-specific URLs belong in local client config.
