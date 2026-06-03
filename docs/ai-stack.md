@@ -91,6 +91,8 @@ The current review command reports duplicate skill names, duplicate command name
 ```bash
 mise run ai:review
 mise run ai:feedback
+mise run ai:usage
+mise run ai:usage:report
 mise run ai:archive:plan
 ```
 
@@ -111,7 +113,7 @@ Rules:
 - Keep raw logs local; commit summarized decisions.
 - Treat project-specific feedback as project-local unless it recurs elsewhere.
 
-Archive and consolidation plans are written to `${XDG_STATE_HOME:-~/.local/state}/ai-stack/archive-plans`. They are local review artifacts and should not be committed unless manually sanitized.
+Usage reports are written to `${XDG_STATE_HOME:-~/.local/state}/ai-stack/usage`. Archive and consolidation plans are written to `${XDG_STATE_HOME:-~/.local/state}/ai-stack/archive-plans`. They are local review artifacts and should not be committed unless manually sanitized.
 
 ## Bootstrap
 
@@ -130,6 +132,7 @@ mise run ai:inventory
 mise run ai:live-inventory
 mise run ai:review
 mise run ai:report
+mise run ai:usage:report
 mise run ai:archive:plan
 mise run ai:snapshot:skills
 mise run ai:skill:drift

@@ -39,6 +39,8 @@ mise tasks ls --local
 mise run bootstrap:preflight
 mise run ai:validate
 mise run ai:feedback
+mise run ai:usage
+mise run ai:usage:report
 mise run ai:archive:plan
 mise run ai:report
 mise run ai:generate:mcp

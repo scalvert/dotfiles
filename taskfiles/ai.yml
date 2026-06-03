@@ -32,6 +32,16 @@ tasks:
     cmds:
       - ./scripts/ai-stack feedback
 
+  usage:
+    desc: Show names-only AI skill and command age signals
+    cmds:
+      - ./scripts/ai-stack usage
+
+  usage:report:
+    desc: Write a local names-only usage age report
+    cmds:
+      - ./scripts/ai-stack usage-report
+
   archive:plan:
     desc: Write a local archive/consolidation plan for skills and commands
     cmds:
