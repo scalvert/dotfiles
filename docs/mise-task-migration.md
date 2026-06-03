@@ -38,6 +38,7 @@ mise trust
 mise tasks ls --local
 mise run bootstrap:preflight
 mise run ai:validate
+mise run ai:doctor
 mise run ai:feedback
 mise run ai:usage
 mise run ai:usage:report

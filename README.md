@@ -41,6 +41,7 @@ mise run bootstrap:status
 mise run install
 mise run reset:dry-run
 mise run ai:validate
+mise run ai:doctor
 mise run ai:feedback
 mise run ai:report
 ```

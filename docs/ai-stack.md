@@ -129,6 +129,7 @@ Local checkout:
 ```bash
 ./install
 mise run ai:validate
+mise run ai:doctor
 mise run ai:inventory
 mise run ai:live-inventory
 mise run ai:review
@@ -169,6 +170,7 @@ Reinstall managed links:
 ```bash
 mise run dotfiles:install
 mise run ai:validate
+mise run ai:doctor
 ```
 
 Command shim install manifests and backups live under `${XDG_STATE_HOME:-~/.local/state}/ai-stack`, not under `~/.config/ai`, so they do not get written into the dotfiles checkout when `~/.config/ai` is symlinked to `packages/ai`.

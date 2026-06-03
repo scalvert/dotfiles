@@ -12,6 +12,11 @@ tasks:
     cmds:
       - ./scripts/ai-stack validate
 
+  doctor:
+    desc: Run AI stack architecture and generated-artifact checks
+    cmds:
+      - ./scripts/ai-stack doctor
+
   inventory:
     desc: Show personal AI stack inventory
     cmds:

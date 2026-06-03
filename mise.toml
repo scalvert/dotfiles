@@ -79,6 +79,10 @@ depends = ["ai:validate"]
 description = "Validate personal AI stack configuration"
 run = "./scripts/ai-stack validate"
 
+[tasks."ai:doctor"]
+description = "Run AI stack architecture and generated-artifact checks"
+run = "./scripts/ai-stack doctor"
+
 [tasks."ai:inventory"]
 description = "Show personal AI stack inventory"
 run = "./scripts/ai-stack inventory"

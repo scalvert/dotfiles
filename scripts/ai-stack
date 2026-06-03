@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply]"
+  echo "usage: scripts/ai-stack <validate|doctor|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply]"
 }
 
 validate() {
@@ -48,6 +48,73 @@ validate() {
 
   if [[ -f "$ai_dir/skills/managed-lock.snapshot.tsv" ]]; then
     awk -F '\t' 'NF != 7 { print "invalid snapshot row " NR ": expected 7 tab-separated fields" > "/dev/stderr"; exit 1 }' "$ai_dir/skills/managed-lock.snapshot.tsv"
+  fi
+}
+
+doctor_check_path() {
+  local path="$1"
+  local description="$2"
+
+  if [[ -e "$path" ]]; then
+    printf 'ok   %s\n' "$description"
+  else
+    printf 'fail %s (%s)\n' "$description" "$path"
+    return 1
+  fi
+}
+
+doctor_check_grep() {
+  local pattern="$1"
+  local path="$2"
+  local description="$3"
+
+  if grep -q "$pattern" "$path"; then
+    printf 'ok   %s\n' "$description"
+  else
+    printf 'fail %s (%s)\n' "$description" "$path"
+    return 1
+  fi
+}
+
+doctor() {
+  local failures=0
+
+  echo "AI stack doctor"
+  echo
+
+  if validate; then
+    printf 'ok   base validation\n'
+  else
+    printf 'fail base validation\n'
+    failures=$((failures + 1))
+  fi
+
+  doctor_check_path "$ai_dir/registry.yaml" "registry exists" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/commands/plannotator.json" "canonical Plannotator command spec exists" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/commands/claude/plannotator-review.md" "Claude command shim generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/commands/codex/plannotator-review.md" "Codex command shim generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/commands/cursor/plannotator-review.md" "Cursor command shim generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/commands/opencode/plannotator-review.md" "opencode command shim generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/mcp/shared/servers.json" "shared MCP profile generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/mcp/cursor/mcp.json" "Cursor MCP profile generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/generated/mcp/codex/config.toml" "Codex MCP snippet generated" || failures=$((failures + 1))
+  doctor_check_path "$ai_dir/feedback/README.md" "feedback-loop docs exist" || failures=$((failures + 1))
+  doctor_check_path "$repo_root/docs/ai-stack.md" "AI stack docs exist" || failures=$((failures + 1))
+  doctor_check_path "$repo_root/docs/mise-task-migration.md" "mise migration docs exist" || failures=$((failures + 1))
+
+  doctor_check_grep 'ai:feedback' "$repo_root/mise.toml" "mise feedback task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:usage:report' "$repo_root/mise.toml" "mise usage report task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:prompt:plan' "$repo_root/mise.toml" "mise prompt plan task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:archive:plan' "$repo_root/mise.toml" "mise archive plan task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
+  doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
+
+  echo
+  if [[ "$failures" -eq 0 ]]; then
+    echo "AI stack doctor: ok"
+  else
+    echo "AI stack doctor: $failures failure(s)"
+    return 1
   fi
 }
 
@@ -1124,6 +1191,9 @@ sync_mcp() {
 case "${1:-}" in
   validate)
     validate
+    ;;
+  doctor)
+    doctor
     ;;
   inventory)
     inventory
