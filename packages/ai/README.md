@@ -19,7 +19,7 @@ packages/ai/
   registry.yaml       # Canonical inventory and lifecycle decisions
   commands/           # Canonical command specs for generated client shims
   generated/          # Generated per-client artifacts, reviewed before install
-  mcp/servers.json    # Shared stdio MCP profile for tools that can consume it directly
+  mcp/servers.json    # Public-safe shared stdio MCP catalog
   prompts/            # Reusable prompt source material
   skills/             # Skill source-of-truth notes and manifests
   agents/             # Agent definitions and ownership notes
@@ -34,3 +34,14 @@ packages/ai/
 3. Archive before deleting.
 4. Secrets stay in local files, keychains, or app-owned auth stores.
 5. Project-specific behavior belongs in the project unless it is broadly reusable.
+
+## MCP
+
+`mcp/servers.json` contains only public-safe stdio servers. Private HTTP MCP servers, auth headers, and company-specific URLs belong in local client config.
+
+Generate client profiles:
+
+```bash
+mise run ai:generate:mcp
+mise run ai:diff:mcp
+```

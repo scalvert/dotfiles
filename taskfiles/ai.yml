@@ -57,6 +57,16 @@ tasks:
     cmds:
       - ./scripts/ai-stack diff-commands
 
+  generate:mcp:
+    desc: Generate public-safe MCP profiles from the canonical MCP catalog
+    cmds:
+      - ./scripts/ai-stack generate-mcp
+
+  diff:mcp:
+    desc: Compare generated MCP profiles against live client MCP files
+    cmds:
+      - ./scripts/ai-stack diff-mcp
+
   install:commands:dry-run:
     desc: Preview installing generated command shims into live client command folders
     cmds:

@@ -40,6 +40,8 @@ mise run bootstrap:preflight
 mise run ai:validate
 mise run ai:feedback
 mise run ai:report
+mise run ai:generate:mcp
+mise run ai:diff:mcp
 mise run reset:dry-run
 mise run mise:outdated
 ```

@@ -1,0 +1,9 @@
+# Generated from packages/ai/mcp/servers.json
+# Copy reviewed sections into local Codex config as needed.
+[mcp_servers.fetch]
+command = "uvx"
+args = ["mcp-server-fetch","--ignore-robots-txt"]
+
+[mcp_servers.package-version]
+command = "npx"
+args = ["-y","mcp-package-version"]

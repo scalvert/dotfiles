@@ -115,6 +115,14 @@ run = "./scripts/ai-stack generate-commands"
 description = "Compare generated command shims against live client command files"
 run = "./scripts/ai-stack diff-commands"
 
+[tasks."ai:generate:mcp"]
+description = "Generate public-safe MCP profiles from the canonical MCP catalog"
+run = "./scripts/ai-stack generate-mcp"
+
+[tasks."ai:diff:mcp"]
+description = "Compare generated MCP profiles against live client MCP files"
+run = "./scripts/ai-stack diff-mcp"
+
 [tasks."ai:install:commands:dry-run"]
 description = "Preview installing generated command shims into live client command folders"
 run = "./scripts/ai-stack install-commands"

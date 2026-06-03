@@ -131,6 +131,8 @@ mise run ai:snapshot:skills
 mise run ai:skill:drift
 mise run ai:generate:commands
 mise run ai:diff:commands
+mise run ai:generate:mcp
+mise run ai:diff:mcp
 mise run ai:install:commands:dry-run
 mise run ai:reset:commands:dry-run
 ```
@@ -211,6 +213,30 @@ mise run ai:reset:commands
 ```
 
 Reset reads the install manifest in reverse order. Files that were created by the installer are removed; files that existed before install are restored from backup.
+
+## MCP Profiles
+
+The canonical public-safe MCP catalog lives at `packages/ai/mcp/servers.json`. It should include portable stdio servers only.
+
+Generate reviewed client profiles:
+
+```bash
+mise run ai:generate:mcp
+```
+
+Generated files:
+
+- `packages/ai/generated/mcp/shared/servers.json`
+- `packages/ai/generated/mcp/cursor/mcp.json`
+- `packages/ai/generated/mcp/codex/config.toml`
+
+Compare generated profiles with live local config:
+
+```bash
+mise run ai:diff:mcp
+```
+
+Private HTTP MCP servers, OAuth headers, company URLs, and project-specific MCP config stay local. Add them to client-owned config files or project config, not to the public catalog.
 
 ## Next Increments
 

@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|generate-commands|diff-commands|install-commands|reset-commands|reset|sync-mcp> [--apply]"
+  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply]"
 }
 
 validate() {
@@ -17,6 +17,14 @@ validate() {
     find "$ai_dir/commands" -type f -name '*.json' -print | while read -r spec; do
       jq empty "$spec"
     done
+    find "$ai_dir/generated/mcp" -type f \( -name '*.json' -o -name '*.jsonc' \) -print 2>/dev/null | while read -r generated_mcp; do
+      jq empty "$generated_mcp"
+    done
+  fi
+
+  if [[ -f "$ai_dir/generated/mcp/shared/servers.json" ]] && ! cmp -s "$ai_dir/generated/mcp/shared/servers.json" "$repo_root/packages/mcp/servers.json"; then
+    echo "packages/mcp/servers.json is out of sync; run scripts/ai-stack sync-mcp" >&2
+    exit 1
   fi
 
   find "$ai_dir/prompts" -type f -name '*.md' -print | while read -r prompt; do
@@ -61,6 +69,13 @@ inventory() {
   echo
   echo "Command specs:"
   find "$ai_dir/commands" -type f -name '*.json' -print | sort
+  echo
+  echo "Generated MCP profiles:"
+  if [[ -d "$ai_dir/generated/mcp" ]]; then
+    find "$ai_dir/generated/mcp" -type f -print | sort
+  else
+    echo "missing; run scripts/ai-stack generate-mcp"
+  fi
   echo
   echo "Managed skill snapshot:"
   if [[ -f "$ai_dir/skills/managed-lock.snapshot.tsv" ]]; then
@@ -484,6 +499,43 @@ EOF
   echo "Generated command shims in $generated_dir"
 }
 
+generate_mcp() {
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "jq is required to generate MCP profiles" >&2
+    exit 1
+  fi
+
+  local generated_dir="$ai_dir/generated/mcp"
+  local shared_dir="$generated_dir/shared"
+  local cursor_dir="$generated_dir/cursor"
+  local codex_dir="$generated_dir/codex"
+
+  mkdir -p "$shared_dir" "$cursor_dir" "$codex_dir"
+
+  jq -S '.' "$ai_dir/mcp/servers.json" > "$shared_dir/servers.json"
+  jq -S '.' "$ai_dir/mcp/servers.json" > "$cursor_dir/mcp.json"
+
+  {
+    echo "# Generated from packages/ai/mcp/servers.json"
+    echo "# Copy reviewed sections into local Codex config as needed."
+    local first_server="true"
+    jq -r '.mcpServers | keys[]' "$ai_dir/mcp/servers.json" | while read -r name; do
+      local command
+      command="$(jq -r --arg name "$name" '.mcpServers[$name].command' "$ai_dir/mcp/servers.json")"
+      if [[ "$first_server" == "true" ]]; then
+        first_server="false"
+      else
+        echo
+      fi
+      echo "[mcp_servers.$name]"
+      printf 'command = %s\n' "$(jq -Rn --arg value "$command" '$value')"
+      printf 'args = %s\n' "$(jq -c --arg name "$name" '.mcpServers[$name].args // []' "$ai_dir/mcp/servers.json")"
+    done
+  } > "$codex_dir/config.toml"
+
+  echo "Generated MCP profiles in $generated_dir"
+}
+
 diff_one_command_dir() {
   local client="$1"
   local live_dir="$2"
@@ -526,6 +578,49 @@ diff_commands() {
   diff_one_command_dir cursor "$HOME/.cursor/commands"
   diff_one_command_dir opencode "$HOME/.config/opencode/commands"
   diff_one_command_dir opencode "$HOME/.config/opencode/command"
+}
+
+diff_one_mcp_file() {
+  local label="$1"
+  local generated_file="$2"
+  local live_file="$3"
+
+  echo "$label: $live_file"
+  if [[ ! -f "$generated_file" ]]; then
+    echo "  missing generated file; run scripts/ai-stack generate-mcp"
+    echo
+    return 0
+  fi
+
+  if [[ ! -f "$live_file" ]]; then
+    echo "  missing live file"
+    echo
+    return 0
+  fi
+
+  if cmp -s "$generated_file" "$live_file"; then
+    echo "  unchanged"
+  else
+    echo "  differs"
+    if command -v jq >/dev/null 2>&1; then
+      echo "  generated servers:"
+      jq -r '.mcpServers | keys[] | "    " + .' "$generated_file" 2>/dev/null || true
+      echo "  live servers:"
+      jq -r '.mcpServers | keys[] | "    " + .' "$live_file" 2>/dev/null || true
+    else
+      echo "  install jq to inspect server-key differences"
+    fi
+    echo "  raw diff suppressed because live MCP config may contain private URLs or auth"
+  fi
+  echo
+}
+
+diff_mcp() {
+  diff_one_mcp_file shared "$ai_dir/generated/mcp/shared/servers.json" "$HOME/.config/mcp/servers.json"
+  diff_one_mcp_file cursor "$ai_dir/generated/mcp/cursor/mcp.json" "$HOME/.cursor/mcp.json"
+  echo "codex: $HOME/.codex/config.toml"
+  echo "  generated snippet: $ai_dir/generated/mcp/codex/config.toml"
+  echo "  compare manually; Codex config may contain local auth, model, and trusted-project settings"
 }
 
 command_install_targets() {
@@ -744,8 +839,9 @@ feedback() {
 }
 
 sync_mcp() {
-  cp "$ai_dir/mcp/servers.json" "$repo_root/packages/mcp/servers.json"
-  echo "Synced packages/ai/mcp/servers.json -> packages/mcp/servers.json"
+  generate_mcp
+  cp "$ai_dir/generated/mcp/shared/servers.json" "$repo_root/packages/mcp/servers.json"
+  echo "Synced generated shared MCP profile -> packages/mcp/servers.json"
 }
 
 case "${1:-}" in
@@ -776,8 +872,14 @@ case "${1:-}" in
   generate-commands)
     generate_commands
     ;;
+  generate-mcp)
+    generate_mcp
+    ;;
   diff-commands)
     diff_commands
+    ;;
+  diff-mcp)
+    diff_mcp
     ;;
   install-commands)
     install_commands "${2:-}"
