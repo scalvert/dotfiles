@@ -1,0 +1,36 @@
+# Personal AI Stack
+
+This package is the source of truth for Steve's personal AI development environment.
+
+It owns durable, reviewable configuration:
+
+- skill and prompt inventory
+- MCP server catalog
+- agent definitions and ownership notes
+- feedback-loop policy
+- archive decisions
+
+It does not own app state, auth tokens, chat history, generated caches, or machine-local trust decisions.
+
+## Layout
+
+```text
+packages/ai/
+  registry.yaml       # Canonical inventory and lifecycle decisions
+  commands/           # Canonical command specs for generated client shims
+  generated/          # Generated per-client artifacts, reviewed before install
+  mcp/servers.json    # Shared stdio MCP profile for tools that can consume it directly
+  prompts/            # Reusable prompt source material
+  skills/             # Skill source-of-truth notes and manifests
+  agents/             # Agent definitions and ownership notes
+  feedback/           # Usage and improvement feedback loop
+  archive/            # Retired decisions before deletion
+```
+
+## Rules
+
+1. Add new reusable AI behavior here first.
+2. Tool-specific folders are generated or synchronized consumers whenever practical.
+3. Archive before deleting.
+4. Secrets stay in local files, keychains, or app-owned auth stores.
+5. Project-specific behavior belongs in the project unless it is broadly reusable.

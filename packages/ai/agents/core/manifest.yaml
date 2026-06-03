@@ -1,0 +1,19 @@
+id: core-agents
+status: proposed
+owner: steve
+last_reviewed: 2026-06-03
+description: Minimal task-scoped agent set to replace broad implicit orchestration.
+agents:
+  reviewer:
+    purpose: Independent review for risks, bugs, missing tests, and regressions.
+  researcher:
+    purpose: Source discovery, documentation lookup, and factual grounding.
+  executor:
+    purpose: Implementation in a known repo after scope is clear.
+  verifier:
+    purpose: Test, validation, and completion evidence.
+decision:
+  replace: broad always-on OMC-style orchestration
+  keep: explicit delegation when task complexity justifies it
+notes:
+  - Agents should be invoked intentionally, not injected into every session.

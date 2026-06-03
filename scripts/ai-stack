@@ -1,0 +1,722 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ai_dir="$repo_root/packages/ai"
+
+usage() {
+  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|generate-commands|diff-commands|install-commands|reset-commands|sync-mcp> [--apply]"
+}
+
+validate() {
+  test -f "$ai_dir/registry.yaml"
+  test -f "$ai_dir/mcp/servers.json"
+
+  if command -v jq >/dev/null 2>&1; then
+    jq empty "$ai_dir/mcp/servers.json"
+    find "$ai_dir/commands" -type f -name '*.json' -print | while read -r spec; do
+      jq empty "$spec"
+    done
+  fi
+
+  find "$ai_dir/prompts" -type f -name '*.md' -print | while read -r prompt; do
+    first_line="$(head -n 1 "$prompt")"
+    if [[ "$first_line" != "---" ]]; then
+      echo "missing frontmatter: $prompt" >&2
+      exit 1
+    fi
+  done
+
+  find "$ai_dir/skills" -mindepth 2 -maxdepth 2 -name manifest.yaml -print | while read -r manifest; do
+    if ! grep -q '^id:' "$manifest"; then
+      echo "missing id in $manifest" >&2
+      exit 1
+    fi
+    if ! grep -q '^status:' "$manifest"; then
+      echo "missing status in $manifest" >&2
+      exit 1
+    fi
+  done
+
+  if [[ -f "$ai_dir/skills/managed-lock.snapshot.tsv" ]]; then
+    awk -F '\t' 'NF != 7 { print "invalid snapshot row " NR ": expected 7 tab-separated fields" > "/dev/stderr"; exit 1 }' "$ai_dir/skills/managed-lock.snapshot.tsv"
+  fi
+}
+
+inventory() {
+  echo "AI stack source: $ai_dir"
+  echo
+  echo "Prompts:"
+  find "$ai_dir/prompts" -type f -name '*.md' -maxdepth 1 -print | sort
+  echo
+  echo "MCP servers:"
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.mcpServers | keys[]' "$ai_dir/mcp/servers.json"
+  else
+    sed -n '1,120p' "$ai_dir/mcp/servers.json"
+  fi
+  echo
+  echo "Skill manifests:"
+  find "$ai_dir/skills" -mindepth 2 -maxdepth 2 -name manifest.yaml -print | sort
+  echo
+  echo "Command specs:"
+  find "$ai_dir/commands" -type f -name '*.json' -print | sort
+  echo
+  echo "Managed skill snapshot:"
+  if [[ -f "$ai_dir/skills/managed-lock.snapshot.tsv" ]]; then
+    echo "$ai_dir/skills/managed-lock.snapshot.tsv"
+  else
+    echo "missing; run scripts/ai-stack snapshot-skills"
+  fi
+}
+
+print_dirs() {
+  local label="$1"
+  shift
+
+  echo "$label:"
+  for path in "$@"; do
+    if [[ -d "$path" ]]; then
+      find "$path" -mindepth 1 -maxdepth 1 -type d -print | sort
+    else
+      echo "  missing: $path"
+    fi
+  done
+  echo
+}
+
+print_files() {
+  local label="$1"
+  shift
+
+  echo "$label:"
+  for path in "$@"; do
+    if [[ -d "$path" ]]; then
+      find "$path" -maxdepth 1 -type f -name '*.md' -print | sort
+    else
+      echo "  missing: $path"
+    fi
+  done
+  echo
+}
+
+print_mcp_servers() {
+  echo "MCP servers:"
+
+  if [[ -f "$HOME/.config/mcp/servers.json" ]] && command -v jq >/dev/null 2>&1; then
+    jq -r '.mcpServers | keys[] | "  shared-stdio: \(.)"' "$HOME/.config/mcp/servers.json" 2>/dev/null || true
+  fi
+
+  if [[ -f "$HOME/.cursor/mcp.json" ]] && command -v jq >/dev/null 2>&1; then
+    jq -r '.mcpServers | keys[] | "  cursor: \(.)"' "$HOME/.cursor/mcp.json" 2>/dev/null || true
+  fi
+
+  if [[ -f "$HOME/workspace/scio/.mcp.json" ]] && command -v jq >/dev/null 2>&1; then
+    jq -r '.mcpServers | keys[] | "  scio-project: \(.)"' "$HOME/workspace/scio/.mcp.json" 2>/dev/null || true
+  fi
+
+  if [[ -f "$HOME/.codex/config.toml" ]]; then
+    sed -n 's/^\[mcp_servers\.\([^].]*\)\]$/  codex: \1/p' "$HOME/.codex/config.toml" | sort
+  fi
+
+  echo
+}
+
+live_inventory() {
+  echo "Live AI stack inventory"
+  echo "Home: $HOME"
+  echo
+
+  print_dirs "Skill directories" \
+    "$HOME/.claude/skills" \
+    "$HOME/.agents/skills" \
+    "$HOME/.codex/skills" \
+    "$HOME/.cursor/skills-cursor"
+
+  print_files "Command shims" \
+    "$HOME/.claude/commands" \
+    "$HOME/.cursor/commands" \
+    "$HOME/.config/opencode/commands" \
+    "$HOME/.config/opencode/command"
+
+  print_mcp_servers
+
+  echo "Knowledge and memory surfaces:"
+  for path in \
+    "$HOME/Documents/Obsidian Vault" \
+    "$HOME/.claude/CLAUDE.md" \
+    "$HOME/.codex/memories_1.sqlite" \
+    "$HOME/.config/atuin"; do
+    if [[ -e "$path" ]]; then
+      echo "  present: $path"
+    else
+      echo "  missing: $path"
+    fi
+  done
+}
+
+review() {
+  local tmpdir
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/ai-stack-review.XXXXXX")"
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  (find "$HOME/.claude/skills" "$HOME/.agents/skills" "$HOME/.codex/skills" "$HOME/.cursor/skills-cursor" \
+    -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null |
+    awk -F/ '{print $NF}' |
+    sort > "$tmpdir/skill-names.txt") || true
+
+  (find "$HOME/.claude/commands" "$HOME/.cursor/commands" "$HOME/.config/opencode/commands" "$HOME/.config/opencode/command" \
+    -maxdepth 1 -type f -name '*.md' -print 2>/dev/null |
+    awk -F/ '{name=$NF; sub(/\.md$/, "", name); print name}' |
+    sort > "$tmpdir/command-names.txt") || true
+
+  echo "AI stack review"
+  echo
+
+  echo "Duplicate skill names across clients:"
+  uniq -d "$tmpdir/skill-names.txt" | sed 's/^/  /'
+  if [[ ! -s "$tmpdir/skill-names.txt" ]] || [[ -z "$(uniq -d "$tmpdir/skill-names.txt")" ]]; then
+    echo "  none found"
+  fi
+  echo
+
+  echo "Duplicate command names across clients:"
+  uniq -d "$tmpdir/command-names.txt" | sed 's/^/  /'
+  if [[ ! -s "$tmpdir/command-names.txt" ]] || [[ -z "$(uniq -d "$tmpdir/command-names.txt")" ]]; then
+    echo "  none found"
+  fi
+  echo
+
+  echo "Unclassified live skill names:"
+  local unclassified_count=0
+  while read -r skill_name; do
+    case "$skill_name" in
+      .system|plannotator-*|glean-*|linear-*|gws-*|scio-go-style)
+        continue
+        ;;
+      babysit|canvas|create-hook|create-rule|create-skill|create-subagent|loop|migrate-to-skills|sdk|shell|split-to-prs|statusline|update-cli-config|update-cursor-settings)
+        continue
+        ;;
+      agent-council|agent-council-workspace|council-discussion)
+        continue
+        ;;
+    esac
+
+    echo "  $skill_name"
+    unclassified_count=$((unclassified_count + 1))
+  done < <(sort -u "$tmpdir/skill-names.txt")
+  if [[ "$unclassified_count" -eq 0 ]]; then
+    echo "  none found"
+  fi
+  echo
+
+  echo "Archive/dead-skill candidates to review:"
+  echo "  agent-council, agent-council-workspace, council-discussion: replace with packages/ai/agents/core if no active workflow remains"
+  echo "  goose/crush/superpowers config: archive unless a current workflow is identified"
+  echo "  unclassified live skills above: assign owner/status or archive"
+  echo
+
+  echo "Known consolidation recommendations:"
+  echo "  consolidate: plannotator-* skills and commands into packages/ai/skills/plannotator"
+  echo "  keep: glean-*, gws-*, and linear-* as managed external bundles with lock metadata"
+  echo "  keep-local: Cursor built-in skills and Codex app runtime plugins"
+  echo "  archive-candidate: ~/.config/goose, ~/.config/crush, ~/.config/superpowers unless active workflows are identified"
+  echo "  replace: broad always-on OMC guidance with explicit task-scoped agents"
+  echo
+
+  echo "Next safe action:"
+  echo "  review generated command shim diffs, then install reviewed shims and archive duplicate manual shims"
+}
+
+review_report() {
+  local review_date="${AI_REVIEW_DATE:-$(date +%Y-%m-%d)}"
+  local report_dir="$ai_dir/reviews"
+  local report="$report_dir/$review_date.md"
+  local stripped_report
+
+  mkdir -p "$report_dir"
+
+  cat > "$report" <<EOF
+# AI Stack Review - $review_date
+
+Generated by \`scripts/ai-stack report\`.
+
+## Decision Summary
+
+- Keep dotfiles as the foundation.
+- Keep managed external bundles for Glean, Google Workspace, and Linear.
+- Consolidate Plannotator commands and skills through canonical specs and generated shims.
+- Replace broad always-on orchestration with explicit task-scoped agents.
+- Archive before deleting.
+
+## Inventory
+
+\`\`\`text
+$("$0" inventory)
+\`\`\`
+
+## Live Inventory
+
+\`\`\`text
+$("$0" live-inventory)
+\`\`\`
+
+## Review Findings
+
+\`\`\`text
+$("$0" review)
+\`\`\`
+
+## Skill Drift
+
+\`\`\`text
+$("$0" skill-drift)
+\`\`\`
+
+## Command Shim Diff
+
+\`\`\`diff
+$("$0" diff-commands)
+\`\`\`
+
+## Recommended Actions
+
+1. Apply reviewed generated Plannotator command shims when ready.
+2. Archive superseded manual Plannotator shims after install is verified.
+3. Decide whether \`find-skills\` and \`agent-browser\` should be reinstalled or removed from the managed skill lockfile.
+4. Decide whether Linear skills need upstream lock hashes or whether local content hashes are sufficient.
+5. Classify or archive unowned live skills reported by \`mise run ai:review\`.
+EOF
+
+  stripped_report="$(mktemp "${TMPDIR:-/tmp}/ai-stack-report.XXXXXX")"
+  sed 's/[[:blank:]]*$//' "$report" > "$stripped_report"
+  mv "$stripped_report" "$report"
+
+  echo "Wrote AI stack review report: $report"
+}
+
+dir_hash() {
+  local dir="$1"
+
+  if [[ ! -d "$dir" ]]; then
+    echo "-"
+    return 0
+  fi
+
+  local tmpfile
+  tmpfile="$(mktemp "${TMPDIR:-/tmp}/ai-stack-dir-hash.XXXXXX")"
+
+  find "$dir" -type f ! -name '.DS_Store' -print | sort | while read -r file; do
+    printf '%s  %s\n' "$(sha256_file "$file")" "${file#$dir/}" >> "$tmpfile"
+  done
+
+  sha256_file "$tmpfile"
+  rm -f "$tmpfile"
+}
+
+emit_skill_snapshot() {
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "jq is required to inspect managed skills" >&2
+    exit 1
+  fi
+
+  local lockfile="$HOME/.agents/.skill-lock.json"
+
+  if [[ ! -f "$lockfile" ]]; then
+    echo "missing lockfile: $lockfile" >&2
+    exit 1
+  fi
+
+  jq -r '.skills | to_entries[] | [
+    .key,
+    (.value.sourceType // "-"),
+    (.value.source // "-"),
+    (.value.skillPath // "-"),
+    (if ((.value.skillFolderHash // "") == "") then "-" else .value.skillFolderHash end),
+    (.value.updatedAt // "-")
+  ] | @tsv' "$lockfile" |
+    while IFS=$'\t' read -r id source_type source skill_path lock_hash updated_at; do
+      local local_hash="-"
+      if [[ -d "$HOME/.agents/skills/$id" ]]; then
+        local_hash="$(dir_hash "$HOME/.agents/skills/$id")"
+      fi
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$source_type" "$source" "$skill_path" "$lock_hash" "$local_hash" "$updated_at"
+    done
+}
+
+snapshot_skills() {
+  local snapshot="$ai_dir/skills/managed-lock.snapshot.tsv"
+
+  emit_skill_snapshot > "$snapshot"
+
+  echo "Wrote managed skill snapshot: $snapshot"
+}
+
+skill_drift() {
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "jq is required to inspect managed skills" >&2
+    exit 1
+  fi
+
+  local lockfile="$HOME/.agents/.skill-lock.json"
+  local snapshot="$ai_dir/skills/managed-lock.snapshot.tsv"
+
+  if [[ ! -f "$lockfile" ]]; then
+    echo "missing lockfile: $lockfile" >&2
+    exit 1
+  fi
+
+  echo "Managed skill drift"
+  echo
+
+  if [[ ! -f "$snapshot" ]]; then
+    echo "No snapshot found at $snapshot"
+    echo "Run: scripts/ai-stack snapshot-skills"
+    return 0
+  fi
+
+  local tmpdir
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/ai-stack-skill-drift.XXXXXX")"
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  emit_skill_snapshot > "$tmpdir/current.tsv"
+
+  echo "Differences from committed snapshot:"
+  if cmp -s "$snapshot" "$tmpdir/current.tsv"; then
+    echo "  none"
+  else
+    diff -u "$snapshot" "$tmpdir/current.tsv" || true
+  fi
+  echo
+
+  echo "Managed skills without upstream lock hash:"
+  awk -F '\t' '$5 == "" || $5 == "-" { print "  " $1 " (" $3 ")" }' "$tmpdir/current.tsv"
+  echo
+
+  echo "Managed skills missing local directory:"
+  awk -F '\t' '$6 == "-" { print "  " $1 }' "$tmpdir/current.tsv"
+}
+
+generate_commands() {
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "jq is required to generate command shims" >&2
+    exit 1
+  fi
+
+  local generated_dir="$ai_dir/generated/commands"
+  mkdir -p "$generated_dir/claude" "$generated_dir/codex" "$generated_dir/cursor" "$generated_dir/opencode"
+
+  find "$ai_dir/commands" -type f -name '*.json' -print | sort | while read -r spec; do
+    local count
+    count="$(jq '.commands | length' "$spec")"
+
+    local index=0
+    while [[ "$index" -lt "$count" ]]; do
+      local id description title shell_command task opencode_message
+      id="$(jq -r ".commands[$index].id" "$spec")"
+      description="$(jq -r ".commands[$index].description" "$spec")"
+      title="$(jq -r ".commands[$index].title" "$spec")"
+      shell_command="$(jq -r ".commands[$index].shell" "$spec")"
+      task="$(jq -r ".commands[$index].task" "$spec")"
+      opencode_message="$(jq -r ".commands[$index].opencodeMessage" "$spec")"
+
+      cat > "$generated_dir/claude/$id.md" <<EOF
+---
+description: $description
+allowed-tools: Bash(plannotator:*)
+---
+
+## $title
+
+!\`$shell_command\`
+
+## Your task
+
+$task
+EOF
+
+      cat > "$generated_dir/opencode/$id.md" <<EOF
+---
+description: $description
+---
+
+$opencode_message
+EOF
+
+      cat > "$generated_dir/cursor/$id.md" <<EOF
+# $title
+
+$description.
+
+Run this command from the repository or workspace context:
+
+\`\`\`bash
+$shell_command
+\`\`\`
+
+Then respond to the feedback:
+
+$task
+EOF
+
+      cat > "$generated_dir/codex/$id.md" <<EOF
+# $title
+
+$description.
+
+Use this command when the user asks for this Plannotator workflow:
+
+\`\`\`bash
+$shell_command
+\`\`\`
+
+After the command returns, continue with this task:
+
+$task
+EOF
+
+      index=$((index + 1))
+    done
+  done
+
+  echo "Generated command shims in $generated_dir"
+}
+
+diff_one_command_dir() {
+  local client="$1"
+  local live_dir="$2"
+  local generated_dir="$ai_dir/generated/commands/$client"
+
+  echo "$client: $live_dir"
+  if [[ ! -d "$live_dir" ]]; then
+    echo "  missing live directory"
+    echo
+    return 0
+  fi
+
+  if [[ ! -d "$generated_dir" ]]; then
+    echo "  missing generated directory; run scripts/ai-stack generate-commands"
+    echo
+    return 0
+  fi
+
+  find "$generated_dir" -maxdepth 1 -type f -name '*.md' -print | sort | while read -r generated_file; do
+    local name live_file
+    name="$(basename "$generated_file")"
+    live_file="$live_dir/$name"
+
+    if [[ -f "$live_file" ]]; then
+      if cmp -s "$generated_file" "$live_file"; then
+        echo "  unchanged: $name"
+      else
+        echo "  differs: $name"
+        diff -u "$live_file" "$generated_file" || true
+      fi
+    else
+      echo "  new: $name"
+    fi
+  done
+  echo
+}
+
+diff_commands() {
+  diff_one_command_dir claude "$HOME/.claude/commands"
+  diff_one_command_dir cursor "$HOME/.cursor/commands"
+  diff_one_command_dir opencode "$HOME/.config/opencode/commands"
+  diff_one_command_dir opencode "$HOME/.config/opencode/command"
+}
+
+command_install_targets() {
+  printf '%s\t%s\n' claude "$HOME/.claude/commands"
+  printf '%s\t%s\n' cursor "$HOME/.cursor/commands"
+  printf '%s\t%s\n' opencode "$HOME/.config/opencode/commands"
+  printf '%s\t%s\n' opencode "$HOME/.config/opencode/command"
+}
+
+is_apply() {
+  [[ "${1:-}" == "--apply" ]]
+}
+
+timestamp() {
+  date +%Y%m%d-%H%M%S
+}
+
+sha256_file() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  elif command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    echo "unknown"
+  fi
+}
+
+reverse_file() {
+  if command -v tac >/dev/null 2>&1; then
+    tac "$1"
+  else
+    tail -r "$1"
+  fi
+}
+
+install_commands() {
+  local mode="dry-run"
+  if is_apply "${1:-}"; then
+    mode="apply"
+  fi
+
+  local state_dir="$HOME/.config/ai/state"
+  local backup_root="$HOME/.config/ai/backups/commands/$(timestamp)"
+  local manifest="$state_dir/command-install-manifest.tsv"
+
+  echo "Command shim install ($mode)"
+  echo
+
+  command_install_targets | while IFS=$'\t' read -r client target_dir; do
+    local generated_dir="$ai_dir/generated/commands/$client"
+
+    if [[ ! -d "$generated_dir" ]]; then
+      echo "$client: missing generated directory; run scripts/ai-stack generate-commands"
+      continue
+    fi
+
+    echo "$client -> $target_dir"
+    find "$generated_dir" -maxdepth 1 -type f -name '*.md' -print | sort | while read -r source_file; do
+      local name target_file backup_file source_hash
+      name="$(basename "$source_file")"
+      target_file="$target_dir/$name"
+      backup_file="$backup_root/${client}/${name}"
+      source_hash="$(sha256_file "$source_file")"
+
+      if [[ -f "$target_file" ]] && cmp -s "$source_file" "$target_file"; then
+        echo "  unchanged: $name"
+        continue
+      fi
+
+      if [[ "$mode" == "dry-run" ]]; then
+        if [[ -f "$target_file" ]]; then
+          echo "  would update: $name"
+        else
+          echo "  would create: $name"
+        fi
+        continue
+      fi
+
+      mkdir -p "$target_dir" "$(dirname "$backup_file")" "$state_dir"
+      if [[ -f "$target_file" ]]; then
+        cp "$target_file" "$backup_file"
+      else
+        backup_file="-"
+      fi
+
+      cp "$source_file" "$target_file"
+      printf '%s\t%s\t%s\t%s\t%s\n' "$client" "$target_file" "$backup_file" "$source_file" "$source_hash" >> "$manifest"
+      echo "  installed: $name"
+    done
+    echo
+  done
+
+  if [[ "$mode" == "dry-run" ]]; then
+    echo "Dry run only. Re-run with --apply to write live command files."
+  else
+    echo "Install manifest: $manifest"
+    echo "Backups: $backup_root"
+  fi
+}
+
+reset_commands() {
+  local mode="dry-run"
+  if is_apply "${1:-}"; then
+    mode="apply"
+  fi
+
+  local manifest="$HOME/.config/ai/state/command-install-manifest.tsv"
+
+  echo "Command shim reset ($mode)"
+  echo
+
+  if [[ ! -f "$manifest" ]]; then
+    echo "No command install manifest found at $manifest"
+    return 0
+  fi
+
+  reverse_file "$manifest" | while IFS=$'\t' read -r client target_file backup_file source_file source_hash; do
+    if [[ -z "${target_file:-}" ]]; then
+      continue
+    fi
+
+    if [[ "$mode" == "dry-run" ]]; then
+      if [[ "$backup_file" == "-" ]]; then
+        echo "  would remove generated file: $target_file"
+      else
+        echo "  would restore backup: $target_file <- $backup_file"
+      fi
+      continue
+    fi
+
+    if [[ "$backup_file" == "-" ]]; then
+      rm -f "$target_file"
+      echo "  removed: $target_file"
+    elif [[ -f "$backup_file" ]]; then
+      cp "$backup_file" "$target_file"
+      echo "  restored: $target_file"
+    else
+      echo "  missing backup for $target_file: $backup_file" >&2
+    fi
+  done
+
+  if [[ "$mode" == "dry-run" ]]; then
+    echo
+    echo "Dry run only. Re-run with --apply to restore/remove installed command files."
+  else
+    mv "$manifest" "$manifest.restored-$(timestamp)"
+  fi
+}
+
+sync_mcp() {
+  cp "$ai_dir/mcp/servers.json" "$repo_root/packages/mcp/servers.json"
+  echo "Synced packages/ai/mcp/servers.json -> packages/mcp/servers.json"
+}
+
+case "${1:-}" in
+  validate)
+    validate
+    ;;
+  inventory)
+    inventory
+    ;;
+  live-inventory)
+    live_inventory
+    ;;
+  review)
+    review
+    ;;
+  report)
+    review_report
+    ;;
+  snapshot-skills)
+    snapshot_skills
+    ;;
+  skill-drift)
+    skill_drift
+    ;;
+  generate-commands)
+    generate_commands
+    ;;
+  diff-commands)
+    diff_commands
+    ;;
+  install-commands)
+    install_commands "${2:-}"
+    ;;
+  reset-commands)
+    reset_commands "${2:-}"
+    ;;
+  sync-mcp)
+    sync_mcp
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

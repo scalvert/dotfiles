@@ -1,0 +1,17 @@
+id: cursor-builtins
+status: keep-local
+owner: cursor
+last_reviewed: 2026-06-03
+description: Cursor-managed built-in and managed skills.
+sources:
+  - ~/.cursor/skills-cursor
+target:
+  path: Cursor-managed local state
+  clients:
+    - cursor
+decision:
+  keep: Cursor built-ins managed by Cursor
+  consolidate: custom non-built-in Cursor skills only
+  archive: none from dotfiles
+notes:
+  - Inventory these but do not vendor them into dotfiles.

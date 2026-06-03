@@ -67,23 +67,22 @@ install_homebrew() {
   fi
 }
 
-# Install Task runner
-install_task() {
-  if [[ -f ~/.local/bin/task ]]; then
-    success "Task runner already installed"
+# Install mise task/runtime manager
+install_mise() {
+  if command -v mise &>/dev/null; then
+    success "mise already installed"
     return 0
   fi
 
-  info "Installing Task runner..."
-  mkdir -p ~/.local/bin
-  sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
-  success "Task runner installed"
+  info "Installing mise..."
+  brew install mise
+  success "mise installed"
 }
 
 # Clone dotfiles if running via curl | bash
 clone_dotfiles() {
-  # If we're already in a dotfiles directory with Taskfile, skip
-  if [[ -f "Taskfile.dist.yml" ]]; then
+  # If we're already in a dotfiles directory with mise tasks, skip
+  if [[ -f "mise.toml" ]]; then
     return 0
   fi
 
@@ -116,19 +115,19 @@ main() {
   install_xcode_cli
   install_homebrew
 
-  # Phase 2: Install Task runner
-  install_task
-  export PATH="$PATH:$HOME/.local/bin"
+  # Phase 2: Install mise
+  install_mise
 
   # Phase 3: Clone/navigate to dotfiles
   clone_dotfiles
 
-  # Phase 4: Run full installation via Task
+  # Phase 4: Run full installation via mise
   echo ""
   info "Running dotfiles installation..."
   echo ""
 
-  task install
+  mise trust -y "$PWD/mise.toml"
+  mise run install
 
   echo ""
   echo -e "${GREEN}========================================${NC}"
@@ -140,7 +139,7 @@ main() {
   info "Next steps:"
   echo "  1. Restart your terminal or run: exec fish"
   echo "  2. Create ~/.config/fish/local.fish for secrets"
-  echo "  3. Run 'task' to see available commands"
+  echo "  3. Run 'mise tasks ls --local' to see available commands"
   echo ""
 }
 

@@ -1,0 +1,137 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+
+min_version = "2025.3.1"
+
+[tasks.default]
+description = "List available mise tasks"
+run = "mise tasks ls --local"
+
+[tasks.install]
+description = "Complete system setup"
+depends = ["system:install", "binutils:install", "dotfiles:install", "ai:install", "nvim:restore"]
+
+[tasks."bootstrap:preflight"]
+description = "Run preflight checks before installation"
+run = "./scripts/bootstrap preflight"
+
+[tasks."bootstrap:status"]
+description = "Show current system status"
+run = "./scripts/bootstrap status"
+
+[tasks."system:install"]
+description = "Install all system dependencies"
+depends = ["brew:install", "mise:install", "mise:update"]
+
+[tasks."brew:install"]
+description = "Install Homebrew and tools defined in Brewfile"
+run = "./scripts/bootstrap install-homebrew && brew bundle"
+
+[tasks."brew:update"]
+description = "Update Brewfile with current brew packages"
+run = "brew bundle dump --force --describe"
+
+[tasks."brew:upgrade"]
+description = "Update Homebrew and upgrade installed packages"
+run = "brew update && brew upgrade && mise run brew:update"
+
+[tasks."brew:cleanup"]
+description = "Remove unused Homebrew dependencies"
+run = "brew cleanup && brew autoremove"
+
+[tasks."binutils:install"]
+description = "Build binutils and set up symlinks"
+run = "./scripts/binutils install"
+
+[tasks."binutils:cache-shell-startup"]
+description = "Refresh generated shell startup cache"
+run = "./scripts/binutils cache-shell-startup"
+
+[tasks."dotfiles:install"]
+description = "Install dotfiles"
+run = "./scripts/dotfiles install"
+alias = "dot:install"
+
+[tasks."shell:update"]
+description = "Refresh shell startup and completion caches"
+run = "./scripts/dotfiles refresh-shell"
+
+[tasks."nvim:restore"]
+description = "Restore Neovim plugins from lazy-lock.json"
+run = "./scripts/nvim restore"
+
+[tasks."nvim:update"]
+description = "Update Neovim plugins and commit lazy-lock.json if changed"
+run = "./scripts/nvim update"
+
+[tasks."ai:install"]
+description = "Install personal AI stack links and validate configuration"
+depends = ["ai:validate"]
+
+[tasks."ai:validate"]
+description = "Validate personal AI stack configuration"
+run = "./scripts/ai-stack validate"
+
+[tasks."ai:inventory"]
+description = "Show personal AI stack inventory"
+run = "./scripts/ai-stack inventory"
+
+[tasks."ai:live-inventory"]
+description = "Inspect live AI config surfaces on this machine"
+run = "./scripts/ai-stack live-inventory"
+
+[tasks."ai:review"]
+description = "Report AI stack consolidation and archive recommendations"
+run = "./scripts/ai-stack review"
+
+[tasks."ai:report"]
+description = "Write a dated AI stack review report under packages/ai/reviews"
+run = "./scripts/ai-stack report"
+
+[tasks."ai:snapshot:skills"]
+description = "Update the managed skill lock snapshot from the live .agents lockfile"
+run = "./scripts/ai-stack snapshot-skills"
+
+[tasks."ai:skill:drift"]
+description = "Compare live managed skills against the checked-in snapshot"
+run = "./scripts/ai-stack skill-drift"
+
+[tasks."ai:generate:commands"]
+description = "Generate client command shims from canonical AI command specs"
+run = "./scripts/ai-stack generate-commands"
+
+[tasks."ai:diff:commands"]
+description = "Compare generated command shims against live client command files"
+run = "./scripts/ai-stack diff-commands"
+
+[tasks."ai:install:commands:dry-run"]
+description = "Preview installing generated command shims into live client command folders"
+run = "./scripts/ai-stack install-commands"
+
+[tasks."ai:install:commands"]
+description = "Install generated command shims into live client command folders with backups"
+run = "./scripts/ai-stack install-commands --apply"
+
+[tasks."ai:reset:commands:dry-run"]
+description = "Preview restoring/removing generated command shims from the install manifest"
+run = "./scripts/ai-stack reset-commands"
+
+[tasks."ai:reset:commands"]
+description = "Restore/remove generated command shims using the install manifest"
+run = "./scripts/ai-stack reset-commands --apply"
+
+[tasks."ai:sync:mcp"]
+description = "Sync shared MCP profile into packages/mcp"
+run = "./scripts/ai-stack sync-mcp"
+
+[tasks."mise:install"]
+description = "Install all mise-managed tools"
+run = "mise install"
+
+[tasks."mise:update"]
+description = "Update all mise-managed tools"
+run = "mise up"
+alias = "mise:up"
+
+[tasks."mise:outdated"]
+description = "List outdated mise-managed tools"
+run = "mise outdated -l"

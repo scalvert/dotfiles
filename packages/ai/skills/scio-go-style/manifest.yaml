@@ -1,0 +1,19 @@
+id: scio-go-style
+status: keep
+owner: steve
+last_reviewed: 2026-06-03
+description: Scio/Glean Go style and review guidance.
+sources:
+  - ~/.codex/skills/scio-go-style
+  - ~/.cursor/commands/go-review.md
+target:
+  path: project/work-specific skill
+  clients:
+    - codex
+    - cursor
+decision:
+  keep: review rules while they remain useful for scio work
+  consolidate: Cursor go-review prompt into a project-local or shared skill source
+  archive: stale copies after scio source of truth is chosen
+notes:
+  - This is work-specific. Keep it out of global behavior unless reused outside scio.

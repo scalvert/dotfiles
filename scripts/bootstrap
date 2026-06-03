@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+info() { printf '[INFO] %s\n' "$1"; }
+ok() { printf '[OK] %s\n' "$1"; }
+warn() { printf '[WARN] %s\n' "$1"; }
+err() { printf '[ERROR] %s\n' "$1" >&2; }
+
+platform() {
+  case "$(uname -s)" in
+    Darwin*) printf 'darwin' ;;
+    Linux*) printf 'linux' ;;
+    *) printf 'unknown' ;;
+  esac
+}
+
+install_xcode_cli() {
+  if [[ "$(platform)" != "darwin" ]]; then
+    return 0
+  fi
+
+  if xcode-select -p >/dev/null 2>&1; then
+    ok "Xcode CLI tools already installed"
+    return 0
+  fi
+
+  info "Installing Xcode Command Line Tools..."
+  xcode-select --install
+  until xcode-select -p >/dev/null 2>&1; do
+    sleep 5
+  done
+  ok "Xcode CLI tools installed"
+}
+
+homebrew_shellenv() {
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    /opt/homebrew/bin/brew shellenv
+  elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    /home/linuxbrew/.linuxbrew/bin/brew shellenv
+  fi
+}
+
+install_homebrew() {
+  if command -v brew >/dev/null 2>&1; then
+    ok "Homebrew already installed"
+    return 0
+  fi
+
+  if [[ "$(platform)" != "darwin" && "$(platform)" != "linux" ]]; then
+    err "Unsupported platform for Homebrew: $(platform)"
+    exit 1
+  fi
+
+  info "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$(homebrew_shellenv)"
+  ok "Homebrew installed"
+}
+
+install_mise() {
+  if command -v mise >/dev/null 2>&1; then
+    ok "mise already installed"
+    return 0
+  fi
+
+  install_homebrew
+  info "Installing mise..."
+  brew install mise
+  ok "mise installed"
+}
+
+clone_dotfiles() {
+  if [[ -f "$repo_root/mise.toml" && -d "$repo_root/.git" ]]; then
+    return 0
+  fi
+
+  local dotfiles_dir="${DOTFILES_DIR:-$HOME/workspace/personal/dotfiles}"
+
+  if [[ -d "$dotfiles_dir/.git" ]]; then
+    info "Using existing dotfiles checkout at $dotfiles_dir"
+    cd "$dotfiles_dir"
+    return 0
+  fi
+
+  info "Cloning dotfiles to $dotfiles_dir..."
+  mkdir -p "$(dirname "$dotfiles_dir")"
+  git clone https://github.com/scalvert/dotfiles.git "$dotfiles_dir"
+  cd "$dotfiles_dir"
+}
+
+preflight() {
+  local missing=0
+
+  printf 'Platform: %s\n' "$(platform)"
+
+  if [[ "$(platform)" == "darwin" ]]; then
+    if xcode-select -p >/dev/null 2>&1; then
+      ok "Xcode CLI tools"
+    else
+      warn "Xcode CLI tools missing"
+      missing=1
+    fi
+  fi
+
+  for tool in brew git mise; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      ok "$tool: $("$tool" --version 2>&1 | head -n 1)"
+    else
+      warn "$tool missing"
+      missing=1
+    fi
+  done
+
+  for dir in "$HOME/.local/bin" "$HOME/.config" "$HOME/.ssh"; do
+    if [[ -d "$dir" ]]; then
+      ok "$dir"
+    else
+      info "Creating $dir"
+      mkdir -p "$dir"
+    fi
+  done
+
+  return "$missing"
+}
+
+status() {
+  echo "=== Platform ==="
+  echo "OS: $(uname -s)"
+  echo "Arch: $(uname -m)"
+  echo "Host: $(hostname)"
+  echo
+  echo "=== Tools ==="
+  for tool in brew git fish nvim mise jq; do
+    if command -v "$tool" >/dev/null 2>&1; then
+      echo "$tool: $("$tool" --version 2>&1 | head -n 1)"
+    else
+      echo "$tool: not installed"
+    fi
+  done
+  echo
+  echo "=== Shell ==="
+  echo "Current: ${SHELL:-unknown}"
+  echo "Fish path: $(command -v fish || true)"
+  if [[ -L "$HOME/.config/fish" || -d "$HOME/.config/fish" ]]; then
+    echo "Fish config: $HOME/.config/fish"
+  else
+    echo "Fish config: not found"
+  fi
+}
+
+install() {
+  install_xcode_cli
+  install_homebrew
+  install_mise
+  clone_dotfiles
+
+  if [[ "${MISE_NO_TRUST:-}" != "1" ]]; then
+    mise trust -y "$PWD/mise.toml"
+  fi
+
+  mise run install
+}
+
+case "${1:-}" in
+  install)
+    install
+    ;;
+  install-homebrew)
+    install_homebrew
+    ;;
+  install-mise)
+    install_mise
+    ;;
+  preflight)
+    preflight
+    ;;
+  status)
+    status
+    ;;
+  *)
+    echo "usage: scripts/bootstrap <install|install-homebrew|install-mise|preflight|status>" >&2
+    exit 2
+    ;;
+esac

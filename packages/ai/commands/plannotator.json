@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "id": "plannotator-annotate",
+      "description": "Open interactive annotation UI for a markdown file",
+      "title": "Markdown Annotations",
+      "shell": "plannotator annotate $ARGUMENTS",
+      "task": "Address the annotation feedback above. The user has reviewed the markdown file and provided specific annotations and comments.",
+      "opencodeMessage": "The Plannotator Annotate has been triggered. Opening the annotation UI...\nAcknowledge \"Opening annotation UI...\" and wait for the user's feedback."
+    },
+    {
+      "id": "plannotator-last",
+      "description": "Annotate the last rendered assistant message",
+      "title": "Message Annotations",
+      "shell": "plannotator annotate-last",
+      "task": "Address the annotation feedback above. The user has reviewed your last message and provided specific annotations and comments.",
+      "opencodeMessage": "The Plannotator Last Message annotation has been triggered. Opening the annotation UI...\nAcknowledge \"Opening last-message annotation UI...\" and wait for the user's feedback."
+    },
+    {
+      "id": "plannotator-review",
+      "description": "Open interactive code review for current changes or a PR URL",
+      "title": "Code Review Feedback",
+      "shell": "plannotator review $ARGUMENTS",
+      "task": "If the review above contains feedback or annotations, address them. If no changes were requested, acknowledge and continue.",
+      "opencodeMessage": "The Plannotator Code Review has been triggered. Opening the review UI...\nAcknowledge \"Opening code review...\" and wait for the user's feedback."
+    }
+  ]
+}

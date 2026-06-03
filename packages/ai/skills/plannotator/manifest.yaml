@@ -1,0 +1,27 @@
+id: plannotator
+status: consolidate
+owner: steve
+last_reviewed: 2026-06-03
+description: Interactive plan, review, and visualization workflows currently duplicated across agent clients.
+sources:
+  - ~/.claude/skills/plannotator-*
+  - ~/.agents/skills/plannotator-*
+  - ~/.codex/skills/plannotator-*
+  - ~/.claude/commands/plannotator-*.md
+  - ~/.config/opencode/commands/plannotator-*.md
+target:
+  path: packages/ai/skills/plannotator
+  clients:
+    - claude
+    - codex
+    - agents
+    - opencode
+generated_artifacts:
+  command_spec: packages/ai/commands/plannotator.json
+  output_dir: packages/ai/generated/commands
+decision:
+  keep: workflow concepts and reviewed skill content
+  consolidate: duplicate client-specific command and skill copies
+  archive: manual command shims after generated shims exist
+notes:
+  - This should become the first generated multi-client skill because it has the clearest duplication.

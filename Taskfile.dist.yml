@@ -11,6 +11,9 @@ includes:
   brew:
     taskfile: ./taskfiles/brew.yml
 
+  ai:
+    taskfile: ./taskfiles/ai.yml
+
   dotfiles:
     aliases:
       - dot
@@ -48,4 +51,5 @@ tasks:
       - task: system:install
       - task: binutils:install
       - task: dot:install
+      - task: ai:install
       - task: nvim:restore

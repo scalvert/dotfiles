@@ -31,6 +31,14 @@ end
 if test -d $HOME/workspace/scio
     set -gx SCIO_ROOT $HOME/workspace/scio
     set -gx DEVDOCK_ROOT $HOME/workspace/scio
+    if not contains -- $HOME/workspace/scio $PATH
+        set -gx PATH $HOME/workspace/scio $PATH
+    end
+end
+
+set -l node_extra_ca_cert "$HOME/certificates/rootCA.pem"
+if test -f $node_extra_ca_cert
+    set -gx NODE_EXTRA_CA_CERTS $node_extra_ca_cert
 end
 
 # Claude/Vertex AI (non-secret config)

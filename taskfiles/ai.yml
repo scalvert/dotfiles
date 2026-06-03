@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: 3
+
+tasks:
+  install:
+    desc: Install personal AI stack links and validate configuration
+    cmds:
+      - task: validate
+
+  validate:
+    desc: Validate personal AI stack configuration
+    cmds:
+      - ./scripts/ai-stack validate
+
+  inventory:
+    desc: Show personal AI stack inventory
+    cmds:
+      - ./scripts/ai-stack inventory
+
+  live-inventory:
+    desc: Inspect live AI config surfaces on this machine
+    cmds:
+      - ./scripts/ai-stack live-inventory
+
+  review:
+    desc: Report AI stack consolidation and archive recommendations
+    cmds:
+      - ./scripts/ai-stack review
+
+  report:
+    desc: Write a dated AI stack review report under packages/ai/reviews
+    cmds:
+      - ./scripts/ai-stack report
+
+  snapshot:skills:
+    desc: Update the managed skill lock snapshot from the live .agents lockfile
+    cmds:
+      - ./scripts/ai-stack snapshot-skills
+
+  skill:drift:
+    desc: Compare live managed skills against the checked-in snapshot
+    cmds:
+      - ./scripts/ai-stack skill-drift
+
+  generate:commands:
+    desc: Generate client command shims from canonical AI command specs
+    cmds:
+      - ./scripts/ai-stack generate-commands
+
+  diff:commands:
+    desc: Compare generated command shims against live client command files
+    cmds:
+      - ./scripts/ai-stack diff-commands
+
+  install:commands:dry-run:
+    desc: Preview installing generated command shims into live client command folders
+    cmds:
+      - ./scripts/ai-stack install-commands
+
+  install:commands:
+    desc: Install generated command shims into live client command folders with backups
+    cmds:
+      - ./scripts/ai-stack install-commands --apply
+
+  reset:commands:dry-run:
+    desc: Preview restoring/removing generated command shims from the install manifest
+    cmds:
+      - ./scripts/ai-stack reset-commands
+
+  reset:commands:
+    desc: Restore/remove generated command shims using the install manifest
+    cmds:
+      - ./scripts/ai-stack reset-commands --apply
+
+  sync:mcp:
+    desc: Sync shared MCP profile into packages/mcp
+    cmds:
+      - ./scripts/ai-stack sync-mcp

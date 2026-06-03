@@ -53,3 +53,13 @@ end
 if command -v fzf >/dev/null
     fzf --fish | source 2>/dev/null
 end
+
+# GitHub CLI identity switching by directory
+function __gh_set_config_dir --on-variable PWD
+    if string match -q "$HOME/workspace/personal*" $PWD
+        set -gx GH_CONFIG_DIR "$HOME/.config/gh-scalvert"
+    else
+        set -gx GH_CONFIG_DIR "$HOME/.config/gh-steve-calvert-glean"
+    end
+end
+__gh_set_config_dir

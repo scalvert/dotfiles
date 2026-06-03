@@ -53,10 +53,8 @@ abbr -a ta 'tmux attach'
 abbr -a tl 'tmux list-sessions'
 
 # Task runner
-abbr -a tk task
-
-# release-it with GitHub auth
-alias release-it 'GITHUB_AUTH=(gh auth token) npx release-it'
+abbr -a mr 'mise run'
+abbr -a mt 'mise tasks ls --local'
 
 # Color settings for ls
 set -gx CLICOLOR 1

@@ -73,3 +73,13 @@ Thumbs.db
 .mise/config.local.toml
 .mise.local.toml
 mise.local.toml
+EVAL-CHECKLIST.md
+
+# Claude Code #
+.claude/
+
+# Oh My Claude Code #
+.omc/
+
+# Skill Creator Eval Workspaces #
+*-workspace/

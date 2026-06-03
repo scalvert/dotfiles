@@ -1,0 +1,19 @@
+id: linear
+status: keep
+owner: steve
+last_reviewed: 2026-06-03
+description: Linear issue search, triage, assignment, comments, status updates, and setup workflows.
+sources:
+  - ~/.agents/skills/linear-*
+  - ~/.agents/.skill-lock.json
+target:
+  path: managed external skill bundle
+  clients:
+    - agents
+    - codex-via-mcp
+decision:
+  keep: task-specific Linear skills
+  consolidate: installer and lock metadata under the AI stack lifecycle review
+  archive: none yet
+notes:
+  - These skills are narrow and useful. Keep them unless Linear MCP fully supersedes them.

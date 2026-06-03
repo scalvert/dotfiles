@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+shared_binutils_path="${SHARED_BINUTILS_PATH:-$repo_root/../../malleatus/shared_binutils}"
+local_binutils_path="$repo_root/local-packages/binutils"
+
+clone_shared() {
+  if [[ -d "$shared_binutils_path/.git" ]]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$shared_binutils_path")"
+  git clone https://github.com/malleatus/shared_binutils.git "$shared_binutils_path"
+}
+
+build_shared() {
+  clone_shared
+  cargo build --manifest-path "$shared_binutils_path/Cargo.toml"
+}
+
+build_repo_binutils() {
+  cargo build --manifest-path "$repo_root/packages/binutils/Cargo.toml"
+}
+
+build_local_packages() {
+  if [[ ! -d "$local_binutils_path/crates" ]]; then
+    return 0
+  fi
+
+  if find "$local_binutils_path/crates" -mindepth 1 -maxdepth 1 -type d | read -r _; then
+    cargo build --manifest-path "$local_binutils_path/Cargo.toml"
+  fi
+}
+
+setup_symlinks() {
+  build_shared
+  "$shared_binutils_path/target/debug/generate-binutils-symlinks"
+}
+
+cache_shell_startup() {
+  build_shared
+  for package in zsh fish bash starship; do
+    "$shared_binutils_path/target/debug/cache-shell-startup" \
+      --config-file="$repo_root/packages/binutils/config/config.lua" \
+      --source="$repo_root/packages/$package" \
+      --destination="$repo_root/packages-dist/$package"
+  done
+}
+
+install() {
+  clone_shared
+  build_shared
+  build_repo_binutils
+  build_local_packages
+  setup_symlinks
+}
+
+case "${1:-}" in
+  install)
+    install
+    ;;
+  build)
+    build_shared
+    build_repo_binutils
+    ;;
+  cache-shell-startup)
+    cache_shell_startup
+    ;;
+  *)
+    echo "usage: scripts/binutils <install|build|cache-shell-startup>" >&2
+    exit 2
+    ;;
+esac

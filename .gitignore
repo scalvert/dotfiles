@@ -15,6 +15,11 @@ packages/wezterm/local_config_overrides.lua
 
 # Local fish config with secrets
 packages/fish/local.fish
+packages/fish/fish_variables
+
+# Local AI stack generated state
+packages/ai/reviews/*.md
+packages/ai/skills/managed-lock.snapshot.tsv
 
 # Secrets exports (encrypted tarballs)
 secrets-*.tar.gpg
@@ -24,4 +29,3 @@ secrets-*.tar.gpg
 .env
 .env.local
 .envrc.local
-

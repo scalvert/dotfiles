@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+commit_lockfile() {
+  "$repo_root/scripts/commit_changed_file.sh" \
+    "$repo_root/packages/nvim/lazy-lock.json" \
+    "chore(nvim): update plugins $(date '+%Y-%m-%d %H:%M:%S')"
+}
+
+restore() {
+  nvim --headless \
+    +verbose \
+    +'Lazy! restore' \
+    +'Lazy! clean' \
+    +'Lazy! clear' \
+    +'TSUpdateSync' \
+    +'autocmd User MasonUpdateAllCompleted qall!' \
+    +'MasonUpdateAll'
+}
+
+update() {
+  nvim --headless \
+    +verbose \
+    +'Lazy! sync' \
+    +'Lazy! clean' \
+    +'Lazy! clear' \
+    +'TSUpdateSync' \
+    +'autocmd User MasonUpdateAllCompleted qall!' \
+    +'MasonUpdateAll'
+
+  commit_lockfile
+}
+
+case "${1:-}" in
+  restore)
+    restore
+    ;;
+  update)
+    update
+    ;;
+  commit)
+    commit_lockfile
+    ;;
+  *)
+    echo "usage: scripts/nvim <restore|update|commit>" >&2
+    exit 2
+    ;;
+esac

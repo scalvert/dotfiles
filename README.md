@@ -15,8 +15,9 @@ curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | ba
 This will:
 1. Install Xcode CLI tools (macOS)
 2. Install Homebrew
-3. Clone this repository
-4. Run the full installation
+3. Install mise
+4. Clone this repository
+5. Run the full installation through `mise run install`
 
 ### Local Install
 
@@ -31,6 +32,18 @@ FORCE=true ./install
 ```
 
 ## Available Tasks
+
+Native mise tasks are the preferred task interface. See [Mise Task Migration](docs/mise-task-migration.md).
+
+```console
+mise tasks ls --local
+mise run bootstrap:status
+mise run install
+mise run ai:validate
+mise run ai:report
+```
+
+The legacy go-task task graph remains only as a migration compatibility layer:
 
 ```console
 task: Available tasks for this project:
@@ -140,8 +153,10 @@ set -gx GITHUB_TOKEN "ghp_..."
 .
 ├── install                 # Bootstrap installer
 ├── Brewfile                # Homebrew packages
-├── Taskfile.dist.yml       # Task runner config
-├── taskfiles/              # Task definitions
+├── mise.toml               # Primary task runner config
+├── scripts/                # Script-backed mise task implementations
+├── Taskfile.dist.yml       # Legacy go-task compatibility config
+├── taskfiles/              # Legacy task definitions during migration
 │   ├── bootstrap.yml       # Preflight checks
 │   ├── brew.yml            # Homebrew tasks
 │   ├── dotfiles.yml        # Dotfile linking

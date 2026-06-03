@@ -1,0 +1,23 @@
+id: glean
+status: keep
+owner: steve
+last_reviewed: 2026-06-03
+description: Enterprise knowledge, search, people, documents, and platform tools.
+sources:
+  - ~/.agents/skills/glean-*
+  - ~/.agents/skills/glean-cli
+  - ~/.claude/skills/glean-cli
+  - ~/.agents/.skill-lock.json
+target:
+  path: managed external skill bundle
+  clients:
+    - agents
+    - claude
+    - codex-via-mcp
+decision:
+  keep: external Glean skill bundle and Glean MCP access
+  consolidate: duplicate copies only when a generated installer flow exists
+  archive: none yet
+notes:
+  - Treat Glean as an external system, not as personal dotfiles content.
+  - Do not commit credentials or company-private data.
