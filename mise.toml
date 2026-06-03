@@ -195,3 +195,7 @@ alias = "mise:up"
 [tasks."mise:outdated"]
 description = "List outdated mise-managed tools"
 run = "mise outdated -l"
+
+[tasks."migration:go-task:retire-check"]
+description = "Verify primary surfaces no longer depend on go-task"
+run = "./scripts/mise-migration go-task-retire-check"

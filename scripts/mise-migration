@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  echo "usage: scripts/mise-migration <go-task-retire-check>" >&2
+}
+
+ok() {
+  printf 'ok   %s\n' "$1"
+}
+
+fail() {
+  printf 'fail %s\n' "$1"
+}
+
+check_no_match() {
+  local pattern="$1"
+  local path="$2"
+  local description="$3"
+
+  if [[ ! -e "$path" ]]; then
+    fail "$description ($path missing)"
+    return 1
+  fi
+
+  if rg -n "$pattern" "$path" >/dev/null; then
+    fail "$description"
+    return 1
+  fi
+
+  ok "$description"
+}
+
+check_path_missing() {
+  local path="$1"
+  local description="$2"
+
+  if [[ -e "$path" ]]; then
+    fail "$description"
+    return 1
+  fi
+
+  ok "$description"
+}
+
+check_path_exists() {
+  local path="$1"
+  local description="$2"
+
+  if [[ -e "$path" ]]; then
+    ok "$description"
+  else
+    fail "$description"
+    return 1
+  fi
+}
+
+check_mise_task() {
+  local task="$1"
+  local task_list="$2"
+
+  if grep -qx "$task" "$task_list"; then
+    ok "mise task exists: $task"
+  else
+    fail "mise task missing: $task"
+    return 1
+  fi
+}
+
+go_task_retire_check() {
+  local failures=0
+  local tmpdir task_list
+
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mise-migration.XXXXXX")"
+  task_list="$tmpdir/mise-tasks.txt"
+
+  echo "go-task retirement check"
+  echo
+
+  if (cd "$repo_root" && mise tasks validate >/dev/null); then
+    ok "mise task definitions validate"
+  else
+    fail "mise task definitions validate"
+    failures=$((failures + 1))
+  fi
+
+  if (cd "$repo_root" && mise tasks ls --local | awk '{print $1}' | sort > "$task_list"); then
+    ok "mise task inventory available"
+  else
+    fail "mise task inventory available"
+    failures=$((failures + 1))
+  fi
+
+  for task in \
+    install \
+    system:install \
+    brew:install \
+    binutils:install \
+    dotfiles:install \
+    shell:update \
+    nvim:restore \
+    secrets:list \
+    ai:validate \
+    ai:doctor \
+    reset:dry-run; do
+    check_mise_task "$task" "$task_list" || failures=$((failures + 1))
+  done
+
+  check_no_match '(^|[[:space:];|&])task([[:space:];|&:]|$)' "$repo_root/install" "bootstrap installer does not call task" || failures=$((failures + 1))
+  check_no_match 'Bash\(task:\*\)' "$repo_root/packages/claude/settings.template.json" "Claude template does not allow task by default" || failures=$((failures + 1))
+  check_no_match 'task brew:install' "$repo_root/docs/modern-cli.md" "modern CLI docs use mise for brew install" || failures=$((failures + 1))
+  check_no_match 'go-task completions only|CMD_SILENT: task' "$repo_root/packages/zsh/completions" "active zsh completions do not include go-task" || failures=$((failures + 1))
+  check_no_match 'brew "go-task"|brew "task"|go-task' "$repo_root/Brewfile" "Brewfile does not install go-task" || failures=$((failures + 1))
+
+  check_path_missing "$repo_root/Taskfile.yml" "root Taskfile.yml is not active" || failures=$((failures + 1))
+  check_path_exists "$repo_root/Taskfile.dist.yml" "legacy Taskfile.dist.yml still available for compatibility" || failures=$((failures + 1))
+  check_path_exists "$repo_root/taskfiles" "legacy taskfiles still available for compatibility" || failures=$((failures + 1))
+  check_path_exists "$repo_root/archive/go-task/README.md" "go-task archive exists" || failures=$((failures + 1))
+
+  rm -rf "$tmpdir"
+
+  echo
+  if [[ "$failures" -eq 0 ]]; then
+    echo "Primary go-task surfaces are retired."
+    echo "Compatibility Taskfiles remain until a fresh-machine mise bootstrap is verified."
+  else
+    echo "go-task retirement check: $failures failure(s)"
+    return 1
+  fi
+}
+
+case "${1:-}" in
+  go-task-retire-check)
+    go_task_retire_check
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

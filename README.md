@@ -44,6 +44,7 @@ mise run ai:validate
 mise run ai:doctor
 mise run ai:feedback
 mise run ai:report
+mise run migration:go-task:retire-check
 ```
 
 The legacy go-task task graph remains only as a migration compatibility layer:

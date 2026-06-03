@@ -108,6 +108,7 @@ doctor() {
   doctor_check_grep 'ai:archive:plan' "$repo_root/mise.toml" "mise archive plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
   doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
+  doctor_check_grep 'migration:go-task:retire-check' "$repo_root/mise.toml" "mise go-task retirement check registered" || failures=$((failures + 1))
 
   echo
   if [[ "$failures" -eq 0 ]]; then
