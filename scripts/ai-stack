@@ -106,6 +106,27 @@ validate() {
     fi
   done
 
+  find "$ai_dir/agents" -mindepth 2 -maxdepth 2 -name manifest.yaml -print | while read -r manifest; do
+    if ! grep -q '^id:' "$manifest"; then
+      echo "missing id in $manifest" >&2
+      exit 1
+    fi
+    if ! grep -Eq '^status: (keep|consolidate|proposed|replace|archive)$' "$manifest"; then
+      echo "missing valid status in $manifest" >&2
+      exit 1
+    fi
+    for field in owner last_reviewed description agents decision; do
+      if ! grep -q "^$field:" "$manifest"; then
+        echo "missing $field in $manifest" >&2
+        exit 1
+      fi
+    done
+    if ! grep -q '^    purpose: ' "$manifest"; then
+      echo "agent manifest needs at least one purpose: $manifest" >&2
+      exit 1
+    fi
+  done
+
   if [[ -f "$ai_dir/skills/managed-lock.snapshot.tsv" ]]; then
     awk -F '\t' 'NF != 7 { print "invalid snapshot row " NR ": expected 7 tab-separated fields" > "/dev/stderr"; exit 1 }' "$ai_dir/skills/managed-lock.snapshot.tsv"
   fi
@@ -309,6 +330,7 @@ completion_audit() {
   audit_path "$ai_dir/prompts/commit-message.md" "Canonical prompt source exists" "packages/ai/prompts/commit-message.md" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/manifest.yaml" "Skill manifests exist for canonical skills" "packages/ai/skills/*/manifest.yaml" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/SKILL.md" "Repo-owned canonical skill body exists" "packages/ai/skills/plannotator/SKILL.md" || missing=$((missing + 1))
+  audit_path "$ai_dir/agents/README.md" "Agent representation is documented" "packages/ai/agents/README.md" || missing=$((missing + 1))
   audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
 
   audit_path "$ai_dir/commands/plannotator.json" "Canonical command specs exist" "packages/ai/commands/plannotator.json" || missing=$((missing + 1))

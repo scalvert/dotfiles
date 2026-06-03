@@ -46,6 +46,9 @@ MCP servers under `mcp/servers.json` must be public-safe portable stdio servers.
 Private HTTP URLs, headers, environment variables, auth, and project-specific
 servers stay local.
 
+Agent manifests under `agents/` must define explicit, task-scoped agents with
+narrow purposes. Avoid implicit always-on orchestration.
+
 ## Completion Audit
 
 Run the ongoing goal audit:
