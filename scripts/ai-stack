@@ -12,6 +12,31 @@ validate() {
   test -f "$ai_dir/registry.yaml"
   test -f "$ai_dir/mcp/servers.json"
 
+  if ! grep -q '^version: [0-9][0-9]*$' "$ai_dir/registry.yaml"; then
+    echo "registry missing numeric version" >&2
+    exit 1
+  fi
+  if ! grep -q '^owner: ' "$ai_dir/registry.yaml"; then
+    echo "registry missing owner" >&2
+    exit 1
+  fi
+  if ! grep -Eq '^last_audited: [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$ai_dir/registry.yaml"; then
+    echo "registry missing last_audited date" >&2
+    exit 1
+  fi
+  for section in decisions tooling clients mcp_servers skills prompts knowledge lifecycle; do
+    if ! grep -q "^$section:" "$ai_dir/registry.yaml"; then
+      echo "registry missing section: $section" >&2
+      exit 1
+    fi
+  done
+  for bucket in keep consolidate replace archive delete; do
+    if ! grep -q "^  $bucket:" "$ai_dir/registry.yaml"; then
+      echo "registry lifecycle missing bucket: $bucket" >&2
+      exit 1
+    fi
+  done
+
   if command -v jq >/dev/null 2>&1; then
     jq empty "$ai_dir/mcp/servers.json"
     jq -e '
@@ -311,6 +336,7 @@ completion_audit() {
   echo
 
   audit_path "$ai_dir/registry.yaml" "Canonical inventory exists" "packages/ai/registry.yaml" || missing=$((missing + 1))
+  audit_path "$ai_dir/REGISTRY.md" "Registry representation is documented" "packages/ai/REGISTRY.md" || missing=$((missing + 1))
   audit_grep '^tooling:' "$ai_dir/registry.yaml" "Tooling inventory is represented" "registry has tooling section" || missing=$((missing + 1))
   audit_grep '^clients:' "$ai_dir/registry.yaml" "AI clients are inventoried" "registry has clients section" || missing=$((missing + 1))
   audit_grep '^mcp_servers:' "$ai_dir/registry.yaml" "MCP servers are inventoried" "registry has mcp_servers section" || missing=$((missing + 1))

@@ -12,6 +12,9 @@ It owns durable, reviewable configuration:
 
 It does not own app state, auth tokens, chat history, generated caches, or machine-local trust decisions.
 
+`registry.yaml` is the canonical inventory and lifecycle decision file. See
+`REGISTRY.md` for the required structure.
+
 ## Layout
 
 ```text
