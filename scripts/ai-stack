@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
+  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
 }
 
 validate() {
@@ -213,6 +213,7 @@ doctor() {
   doctor_check_grep 'ai:usage:report' "$repo_root/mise.toml" "mise usage report task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:prompt:plan' "$repo_root/mise.toml" "mise prompt plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:archive:plan' "$repo_root/mise.toml" "mise archive plan task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:bootstrap:verify' "$repo_root/mise.toml" "mise bootstrap verification task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
   doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
   doctor_check_grep 'migration:go-task:retire-check' "$repo_root/mise.toml" "mise go-task retirement check registered" || failures=$((failures + 1))
@@ -325,6 +326,219 @@ bootstrap_verification_record() {
   return 1
 }
 
+bootstrap_state_dir() {
+  printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+}
+
+bootstrap_marker_path() {
+  printf '%s/bootstrap.env\n' "$(bootstrap_state_dir)"
+}
+
+marker_value() {
+  local marker="$1"
+  local key="$2"
+
+  awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, ""); print; found=1; exit } END { exit 0 }' "$marker"
+}
+
+current_platform() {
+  case "$(uname -s)" in
+    Darwin*) printf 'darwin' ;;
+    Linux*) printf 'linux' ;;
+    *) printf 'unknown' ;;
+  esac
+}
+
+current_arch() {
+  case "$(uname -m)" in
+    arm64|aarch64) printf 'arm64' ;;
+    x86_64|amd64) printf 'x86_64' ;;
+    *) uname -m ;;
+  esac
+}
+
+run_bootstrap_gate() {
+  local command="$1"
+
+  printf '\nRunning: %s\n' "$command"
+  case "$command" in
+    'mise run ai:validate')
+      (cd "$repo_root" && mise run ai:validate)
+      ;;
+    'mise run ai:doctor')
+      (cd "$repo_root" && mise run ai:doctor)
+      ;;
+    'mise run ai:completion:audit')
+      (cd "$repo_root" && mise run ai:completion:audit)
+      ;;
+    'mise run migration:go-task:retire-check')
+      (cd "$repo_root" && mise run migration:go-task:retire-check)
+      ;;
+    'mise run ai:reset:dry-run')
+      (cd "$repo_root" && mise run ai:reset:dry-run)
+      ;;
+    'mise run reset:dry-run')
+      (cd "$repo_root" && mise run reset:dry-run)
+      ;;
+    *)
+      echo "unknown bootstrap verification gate: $command" >&2
+      return 2
+      ;;
+  esac
+}
+
+bootstrap_verify() {
+  local environment="${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-}"
+  local verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-${USER:-steve}}"
+  local output="${AI_BOOTSTRAP_VERIFY_OUTPUT:-}"
+  local marker marker_commit current_commit marker_source date platform arch
+  local failed_command command
+  local commands=(
+    'mise run ai:validate'
+    'mise run ai:doctor'
+    'mise run ai:completion:audit'
+    'mise run migration:go-task:retire-check'
+    'mise run ai:reset:dry-run'
+    'mise run reset:dry-run'
+  )
+
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --environment)
+        if [[ "$#" -lt 2 ]]; then
+          echo "--environment requires a value" >&2
+          return 2
+        fi
+        environment="${2:-}"
+        shift 2
+        ;;
+      --verified-by)
+        if [[ "$#" -lt 2 ]]; then
+          echo "--verified-by requires a value" >&2
+          return 2
+        fi
+        verified_by="${2:-}"
+        shift 2
+        ;;
+      --output)
+        if [[ "$#" -lt 2 ]]; then
+          echo "--output requires a value" >&2
+          return 2
+        fi
+        output="${2:-}"
+        shift 2
+        ;;
+      *)
+        echo "unknown bootstrap verification option: $1" >&2
+        return 2
+        ;;
+    esac
+  done
+
+  if [[ ! "$environment" =~ ^(fresh-machine|disposable-vm|clean-user)$ ]]; then
+    echo "bootstrap verification requires --environment fresh-machine|disposable-vm|clean-user" >&2
+    return 2
+  fi
+  if [[ ! "$verified_by" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "bootstrap verification verified_by must match [A-Za-z0-9._-]+" >&2
+    return 2
+  fi
+
+  marker="$(bootstrap_marker_path)"
+  if [[ ! -f "$marker" ]]; then
+    echo "bootstrap success marker is missing: $marker" >&2
+    echo "run the top-level install command on the verification machine first" >&2
+    return 1
+  fi
+
+  marker_commit="$(marker_value "$marker" dotfiles_commit)"
+  marker_source="$(marker_value "$marker" source)"
+  current_commit="$(git -C "$repo_root" rev-parse --short=12 HEAD)"
+  if [[ -z "$marker_commit" || -z "$marker_source" ]]; then
+    echo "bootstrap marker is missing required fields: $marker" >&2
+    return 1
+  fi
+  if [[ "$marker_commit" != "$current_commit" ]]; then
+    echo "bootstrap marker commit ($marker_commit) does not match current checkout ($current_commit)" >&2
+    return 1
+  fi
+  if [[ "$marker_source" != "mise-install" ]]; then
+    echo "bootstrap marker source is not mise-install: $marker_source" >&2
+    return 1
+  fi
+
+  failed_command=""
+  for command in "${commands[@]}"; do
+    if ! run_bootstrap_gate "$command"; then
+      failed_command="$command"
+      break
+    fi
+  done
+
+  if [[ -n "$failed_command" ]]; then
+    echo "bootstrap verification failed at: $failed_command" >&2
+    return 1
+  fi
+
+  date="$(date -u +%Y-%m-%d)"
+  platform="$(current_platform)"
+  arch="$(current_arch)"
+  if [[ -z "$output" ]]; then
+    output="$ai_dir/bootstrap-verifications/$date-$environment.md"
+  fi
+
+  if [[ -e "$output" ]]; then
+    echo "verification record already exists: $output" >&2
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$output")"
+  cat > "$output" <<EOF
+---
+date: $date
+result: pass
+platform: $platform
+arch: $arch
+dotfiles_commit: $current_commit
+environment: $environment
+verified_by: $verified_by
+---
+
+# Fresh-Machine Bootstrap Verification - $date
+
+## Scope
+
+- mise-first bootstrap from \`install\`
+- primary install task graph
+- AI stack validation
+- non-destructive reset dry runs
+- go-task retirement gate
+
+## Commands
+
+\`\`\`bash
+curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
+mise run ai:validate
+mise run ai:doctor
+mise run ai:completion:audit
+mise run migration:go-task:retire-check
+mise run ai:reset:dry-run
+mise run reset:dry-run
+\`\`\`
+
+## Result
+
+Pass/fail: pass
+
+## Sanitized Notes
+
+- Generated by \`mise run ai:bootstrap:verify\` after a successful install marker.
+- Raw logs, hostnames, usernames, secrets, and private URLs were not recorded.
+EOF
+
+  echo "bootstrap verification record written: ${output#$repo_root/}"
+}
+
 completion_audit() {
   local strict="${1:-}"
   local missing=0
@@ -379,6 +593,7 @@ completion_audit() {
   audit_grep 'curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash' "$repo_root/docs/ai-stack.md" "One-command bootstrap is documented" "docs/ai-stack.md bootstrap section" || missing=$((missing + 1))
   audit_mise_task "install" "mise install orchestration task exists" || missing=$((missing + 1))
   audit_mise_task "bootstrap:preflight" "bootstrap preflight task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:bootstrap:verify" "bootstrap verification recorder exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:retire-check" "go-task retirement check exists" || missing=$((missing + 1))
 
   audit_mise_task "reset:dry-run" "dotfiles reset dry-run task exists" || missing=$((missing + 1))
@@ -398,7 +613,7 @@ completion_audit() {
   if [[ -n "$verification_record" ]]; then
     audit_ok "Fresh-machine bootstrap verification is recorded" "${verification_record#$repo_root/}"
   else
-    audit_open "Fresh-machine bootstrap verification is not recorded" "After testing on a disposable machine or VM, copy packages/ai/bootstrap-verifications/TEMPLATE.md to a dated file and set result: pass."
+    audit_open "Fresh-machine bootstrap verification is not recorded" "After testing on a fresh machine, VM, or clean user, run AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify."
     open=$((open + 1))
   fi
 
@@ -1493,6 +1708,10 @@ case "${1:-}" in
     ;;
   completion-audit)
     completion_audit "${2:-}"
+    ;;
+  bootstrap-verify)
+    shift
+    bootstrap_verify "$@"
     ;;
   inventory)
     inventory

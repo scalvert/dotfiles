@@ -8,11 +8,27 @@ ok() { printf '[OK] %s\n' "$1"; }
 warn() { printf '[WARN] %s\n' "$1"; }
 err() { printf '[ERROR] %s\n' "$1" >&2; }
 
+bootstrap_state_dir() {
+  printf '%s\n' "${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+}
+
+dotfiles_commit() {
+  git -C "$repo_root" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown'
+}
+
 platform() {
   case "$(uname -s)" in
     Darwin*) printf 'darwin' ;;
     Linux*) printf 'linux' ;;
     *) printf 'unknown' ;;
+  esac
+}
+
+arch() {
+  case "$(uname -m)" in
+    arm64|aarch64) printf 'arm64' ;;
+    x86_64|amd64) printf 'x86_64' ;;
+    *) uname -m ;;
   esac
 }
 
@@ -161,6 +177,25 @@ install() {
   fi
 
   mise run install
+  mark_success
+}
+
+mark_success() {
+  local state_dir marker
+
+  state_dir="$(bootstrap_state_dir)"
+  marker="$state_dir/bootstrap.env"
+  mkdir -p "$state_dir"
+
+  cat > "$marker" <<EOF
+date=$(date -u +%Y-%m-%d)
+platform=$(platform)
+arch=$(arch)
+dotfiles_commit=$(dotfiles_commit)
+source=mise-install
+EOF
+
+  ok "Bootstrap success marker written"
 }
 
 case "${1:-}" in
@@ -173,6 +208,9 @@ case "${1:-}" in
   install-mise)
     install_mise
     ;;
+  mark-success)
+    mark_success
+    ;;
   preflight)
     preflight
     ;;
@@ -180,7 +218,7 @@ case "${1:-}" in
     status
     ;;
   *)
-    echo "usage: scripts/bootstrap <install|install-homebrew|install-mise|preflight|status>" >&2
+    echo "usage: scripts/bootstrap <install|install-homebrew|install-mise|mark-success|preflight|status>" >&2
     exit 2
     ;;
 esac

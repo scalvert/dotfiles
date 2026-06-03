@@ -21,8 +21,23 @@ Do not commit:
 - full Homebrew, mise, shell, or app logs
 - private company URLs or internal repository names
 
-Copy `TEMPLATE.md` to a dated file after a real verification run. The
-completion audit only treats a non-template file as proof when it includes:
+Preferred workflow:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
+cd ~/workspace/personal/dotfiles
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
+```
+
+Use `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=disposable-vm` for a VM/container-style
+test or `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=clean-user` for a clean local user
+account. The verifier requires the local bootstrap success marker written by
+the installer, runs the required gates, and writes a pass record only if every
+gate succeeds.
+
+Manual fallback: copy `TEMPLATE.md` to a dated file after a real verification
+run. The completion audit only treats a non-template file as proof when it
+includes:
 
 - `date: YYYY-MM-DD` with a real date
 - `result: pass`

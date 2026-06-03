@@ -150,7 +150,13 @@ mise run ai:reset:commands:dry-run
 
 The bootstrap path uses mise. The old go-task task graph remains as a temporary compatibility layer while parity is verified.
 Use `mise run ai:completion:audit` to inspect goal coverage. Use `mise run ai:completion:audit:strict` only when you expect the full consolidation goal, including fresh-machine verification, to be complete.
-Record real fresh-machine bootstrap evidence by copying `packages/ai/bootstrap-verifications/TEMPLATE.md` to a dated file after testing. The audit only accepts non-template verification files with `result: pass`.
+Record real fresh-machine bootstrap evidence after testing:
+
+```bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
+```
+
+Use `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=disposable-vm` for a VM/container-style test or `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=clean-user` for a clean local user account. The verifier requires the local bootstrap success marker written by the installer, runs the required gates, and writes a sanitized pass record only if every gate succeeds.
 
 ## Reset
 

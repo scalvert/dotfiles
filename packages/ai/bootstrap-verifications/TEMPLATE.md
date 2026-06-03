@@ -38,3 +38,4 @@ Pass/fail:
 
 - Do not paste raw logs.
 - Record only the failing command name, brief symptom, and follow-up decision.
+- Prefer generating this file with `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify`.

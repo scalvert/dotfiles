@@ -67,8 +67,13 @@ mise run ai:completion:audit:strict
 ```
 
 Fresh-machine bootstrap verification records live in
-`bootstrap-verifications/`. Copy the template after a real test run; the audit
-does not count the template itself as proof.
+`bootstrap-verifications/`. After a real test run, generate a sanitized record:
+
+```bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
+```
+
+The audit does not count the template itself as proof.
 
 ## MCP
 

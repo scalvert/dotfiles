@@ -103,6 +103,10 @@ run = "./scripts/ai-stack completion-audit"
 description = "Fail unless the personal AI stack consolidation goal has complete evidence"
 run = "./scripts/ai-stack completion-audit --strict"
 
+[tasks."ai:bootstrap:verify"]
+description = "Run bootstrap verification gates and write a sanitized pass record"
+run = "./scripts/ai-stack bootstrap-verify"
+
 [tasks."ai:inventory"]
 description = "Show personal AI stack inventory"
 run = "./scripts/ai-stack inventory"

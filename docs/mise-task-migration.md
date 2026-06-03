@@ -57,6 +57,7 @@ mise run mise:outdated
 The go-task files still exist as compatibility while the rest of the migration is staged.
 Claude's default permission template and active zsh completion path no longer advertise `task`.
 Use `mise run migration:go-task:retire-check` to verify primary go-task surfaces stay retired.
+On a fresh machine, VM, or clean local user account, run `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify` after `install` completes to record sanitized bootstrap evidence.
 
 Mise requires project configs to be trusted before running tasks. For one-off validation without writing trust state, set `MISE_TRUSTED_CONFIG_PATHS` to the checkout path.
 
@@ -86,7 +87,7 @@ Mise requires project configs to be trusted before running tasks. For one-off va
    - Migrated: install Homebrew and mise first, then run `mise run install`.
 
 8. Retire go-task
-   - Delete `Taskfile.dist.yml` and `taskfiles/` only after `mise tasks ls`, `mise run install`, reset flows, and fresh-machine bootstrap have been verified.
+   - Delete `Taskfile.dist.yml` and `taskfiles/` only after `mise tasks ls`, `mise run install`, reset flows, and `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify` have been verified.
    - Archived active shell completion assets before deleting them from the live completion path.
    - `mise run migration:go-task:retire-check` verifies primary surfaces but intentionally does not replace fresh-machine bootstrap verification.
 

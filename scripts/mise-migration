@@ -104,6 +104,7 @@ go_task_retire_check() {
     secrets:list \
     ai:validate \
     ai:doctor \
+    ai:bootstrap:verify \
     reset:dry-run; do
     check_mise_task "$task" "$task_list" || failures=$((failures + 1))
   done

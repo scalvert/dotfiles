@@ -128,6 +128,7 @@ main() {
 
   mise trust -y "$PWD/mise.toml"
   mise run install
+  ./scripts/bootstrap mark-success
 
   echo ""
   echo -e "${GREEN}========================================${NC}"
