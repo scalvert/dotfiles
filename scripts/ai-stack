@@ -14,6 +14,22 @@ validate() {
 
   if command -v jq >/dev/null 2>&1; then
     jq empty "$ai_dir/mcp/servers.json"
+    jq -e '
+      (.mcpServers | type == "object") and
+      (.mcpServers | length > 0) and
+      (all(.mcpServers | keys[]; test("^[a-z0-9][a-z0-9-]*$"))) and
+      (all(.mcpServers[]; (
+        (.command | type == "string" and length > 0) and
+        (.args | type == "array") and
+        (all(.args[]; type == "string")) and
+        (has("url") | not) and
+        (has("headers") | not) and
+        (has("env") | not)
+      )))
+    ' "$ai_dir/mcp/servers.json" >/dev/null || {
+      echo "invalid public MCP catalog shape: $ai_dir/mcp/servers.json" >&2
+      exit 1
+    }
     find "$ai_dir/commands" -type f -name '*.json' -print | while read -r spec; do
       jq empty "$spec"
       jq -e '
@@ -300,6 +316,7 @@ completion_audit() {
   audit_path "$ai_dir/generated/commands/claude/plannotator-review.md" "Generated Claude command shims exist" "packages/ai/generated/commands/claude" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/commands/codex/plannotator-review.md" "Generated Codex command shims exist" "packages/ai/generated/commands/codex" || missing=$((missing + 1))
   audit_path "$ai_dir/mcp/servers.json" "Canonical MCP catalog exists" "packages/ai/mcp/servers.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/mcp/README.md" "MCP catalog representation is documented" "packages/ai/mcp/README.md" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/mcp/shared/servers.json" "Generated shared MCP profile exists" "packages/ai/generated/mcp/shared/servers.json" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/mcp/cursor/mcp.json" "Generated Cursor MCP profile exists" "packages/ai/generated/mcp/cursor/mcp.json" || missing=$((missing + 1))
   audit_path "$ai_dir/generated/mcp/codex/config.toml" "Generated Codex MCP profile exists" "packages/ai/generated/mcp/codex/config.toml" || missing=$((missing + 1))

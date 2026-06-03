@@ -42,6 +42,10 @@ Command specs under `commands/` must include a numeric `version` and a non-empty
 `commands` array with unique kebab-case ids and all fields needed by the
 generator.
 
+MCP servers under `mcp/servers.json` must be public-safe portable stdio servers.
+Private HTTP URLs, headers, environment variables, auth, and project-specific
+servers stay local.
+
 ## Completion Audit
 
 Run the ongoing goal audit:
