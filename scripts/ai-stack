@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|doctor|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply]"
+  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
 }
 
 validate() {
@@ -102,6 +102,7 @@ doctor() {
   doctor_check_path "$repo_root/docs/ai-stack.md" "AI stack docs exist" || failures=$((failures + 1))
   doctor_check_path "$repo_root/docs/mise-task-migration.md" "mise migration docs exist" || failures=$((failures + 1))
 
+  doctor_check_grep 'ai:completion:audit' "$repo_root/mise.toml" "mise completion audit task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:feedback' "$repo_root/mise.toml" "mise feedback task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:usage:report' "$repo_root/mise.toml" "mise usage report task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:prompt:plan' "$repo_root/mise.toml" "mise prompt plan task registered" || failures=$((failures + 1))
@@ -115,6 +116,138 @@ doctor() {
     echo "AI stack doctor: ok"
   else
     echo "AI stack doctor: $failures failure(s)"
+    return 1
+  fi
+}
+
+audit_ok() {
+  printf 'ok      %s\n' "$1"
+  printf '        evidence: %s\n' "$2"
+}
+
+audit_missing() {
+  printf 'missing %s\n' "$1"
+  printf '        expected: %s\n' "$2"
+}
+
+audit_open() {
+  printf 'open    %s\n' "$1"
+  printf '        next: %s\n' "$2"
+}
+
+audit_path() {
+  local path="$1"
+  local description="$2"
+  local evidence="$3"
+
+  if [[ -e "$path" ]]; then
+    audit_ok "$description" "$evidence"
+  else
+    audit_missing "$description" "$path"
+    return 1
+  fi
+}
+
+audit_grep() {
+  local pattern="$1"
+  local path="$2"
+  local description="$3"
+  local evidence="$4"
+
+  if [[ -e "$path" ]] && grep -q "$pattern" "$path"; then
+    audit_ok "$description" "$evidence"
+  else
+    audit_missing "$description" "$path contains $pattern"
+    return 1
+  fi
+}
+
+audit_mise_task() {
+  local task="$1"
+  local description="$2"
+
+  if grep -q "\\[tasks\\.\"$task\"\\]" "$repo_root/mise.toml" || grep -q "\\[tasks\\.$task\\]" "$repo_root/mise.toml"; then
+    audit_ok "$description" "mise.toml registers $task"
+  else
+    audit_missing "$description" "mise.toml registers $task"
+    return 1
+  fi
+}
+
+completion_audit() {
+  local strict="${1:-}"
+  local missing=0
+  local open=0
+
+  echo "AI stack completion audit"
+  echo
+  echo "This checks repository evidence for the consolidation goal. It does not inspect private auth, histories, caches, or proprietary document contents."
+  echo
+
+  audit_path "$ai_dir/registry.yaml" "Canonical inventory exists" "packages/ai/registry.yaml" || missing=$((missing + 1))
+  audit_grep '^tooling:' "$ai_dir/registry.yaml" "Tooling inventory is represented" "registry has tooling section" || missing=$((missing + 1))
+  audit_grep '^clients:' "$ai_dir/registry.yaml" "AI clients are inventoried" "registry has clients section" || missing=$((missing + 1))
+  audit_grep '^mcp_servers:' "$ai_dir/registry.yaml" "MCP servers are inventoried" "registry has mcp_servers section" || missing=$((missing + 1))
+  audit_grep '^skills:' "$ai_dir/registry.yaml" "Skills are inventoried" "registry has skills section" || missing=$((missing + 1))
+  audit_grep '^prompts:' "$ai_dir/registry.yaml" "Prompts are inventoried" "registry has prompts section" || missing=$((missing + 1))
+  audit_grep '^knowledge:' "$ai_dir/registry.yaml" "Knowledge systems are inventoried" "registry has knowledge section" || missing=$((missing + 1))
+  audit_grep '^  keep:' "$ai_dir/registry.yaml" "Keep decisions are recorded" "registry lifecycle.keep" || missing=$((missing + 1))
+  audit_grep '^  consolidate:' "$ai_dir/registry.yaml" "Consolidate decisions are recorded" "registry lifecycle.consolidate" || missing=$((missing + 1))
+  audit_grep '^  replace:' "$ai_dir/registry.yaml" "Replace decisions are recorded" "registry lifecycle.replace" || missing=$((missing + 1))
+  audit_grep '^  archive:' "$ai_dir/registry.yaml" "Archive decisions are recorded" "registry lifecycle.archive" || missing=$((missing + 1))
+  audit_grep '^  delete:' "$ai_dir/registry.yaml" "Delete decisions are recorded" "registry lifecycle.delete" || missing=$((missing + 1))
+
+  audit_path "$repo_root/docs/ai-stack.md" "Target architecture is documented" "docs/ai-stack.md" || missing=$((missing + 1))
+  audit_grep 'Keep `scalvert/dotfiles` as the foundation' "$repo_root/docs/ai-stack.md" "Foundation decision is explicit" "docs/ai-stack.md decision section" || missing=$((missing + 1))
+  audit_grep 'packages/ai/skills/<id>/' "$repo_root/docs/ai-stack.md" "Skill representation is documented" "docs/ai-stack.md skill representation section" || missing=$((missing + 1))
+  audit_path "$ai_dir/skills/plannotator/manifest.yaml" "Skill manifests exist for canonical skills" "packages/ai/skills/*/manifest.yaml" || missing=$((missing + 1))
+  audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
+
+  audit_path "$ai_dir/commands/plannotator.json" "Canonical command specs exist" "packages/ai/commands/plannotator.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/generated/commands/claude/plannotator-review.md" "Generated Claude command shims exist" "packages/ai/generated/commands/claude" || missing=$((missing + 1))
+  audit_path "$ai_dir/generated/commands/codex/plannotator-review.md" "Generated Codex command shims exist" "packages/ai/generated/commands/codex" || missing=$((missing + 1))
+  audit_path "$ai_dir/mcp/servers.json" "Canonical MCP catalog exists" "packages/ai/mcp/servers.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/generated/mcp/shared/servers.json" "Generated shared MCP profile exists" "packages/ai/generated/mcp/shared/servers.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/generated/mcp/cursor/mcp.json" "Generated Cursor MCP profile exists" "packages/ai/generated/mcp/cursor/mcp.json" || missing=$((missing + 1))
+  audit_path "$ai_dir/generated/mcp/codex/config.toml" "Generated Codex MCP profile exists" "packages/ai/generated/mcp/codex/config.toml" || missing=$((missing + 1))
+
+  audit_path "$ai_dir/feedback/README.md" "Feedback-loop policy exists" "packages/ai/feedback/README.md" || missing=$((missing + 1))
+  audit_mise_task "ai:feedback" "Feedback review task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:usage:report" "Usage age report task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:prompt:plan" "Prompt improvement plan task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:archive:plan" "Archive/dead-skill plan task exists" || missing=$((missing + 1))
+
+  audit_path "$repo_root/install" "One-command bootstrap script exists" "install" || missing=$((missing + 1))
+  audit_grep 'curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash' "$repo_root/docs/ai-stack.md" "One-command bootstrap is documented" "docs/ai-stack.md bootstrap section" || missing=$((missing + 1))
+  audit_mise_task "install" "mise install orchestration task exists" || missing=$((missing + 1))
+  audit_mise_task "bootstrap:preflight" "bootstrap preflight task exists" || missing=$((missing + 1))
+  audit_mise_task "migration:go-task:retire-check" "go-task retirement check exists" || missing=$((missing + 1))
+
+  audit_mise_task "reset:dry-run" "dotfiles reset dry-run task exists" || missing=$((missing + 1))
+  audit_mise_task "reset" "dotfiles reset apply task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:reset:dry-run" "AI reset dry-run task exists" || missing=$((missing + 1))
+  audit_mise_task "ai:reset" "AI reset apply task exists" || missing=$((missing + 1))
+  audit_grep 'This reset is intentionally non-destructive' "$repo_root/docs/ai-stack.md" "Reset process is documented" "docs/ai-stack.md reset section" || missing=$((missing + 1))
+
+  echo
+  if [[ -d "$repo_root/taskfiles" || -e "$repo_root/Taskfile.dist.yml" ]]; then
+    audit_open "Legacy go-task compatibility files remain" "Run a real fresh-machine mise bootstrap/reset verification, then archive or remove Taskfile.dist.yml and taskfiles/."
+    open=$((open + 1))
+  fi
+
+  if [[ ! -d "$ai_dir/bootstrap-verifications" ]]; then
+    audit_open "Fresh-machine bootstrap verification is not recorded" "After testing on a disposable machine or VM, add a sanitized verification note under packages/ai/bootstrap-verifications/."
+    open=$((open + 1))
+  fi
+
+  echo
+  echo "Summary: $missing missing, $open open"
+
+  if [[ "$missing" -gt 0 ]]; then
+    return 1
+  fi
+
+  if [[ "$strict" == "--strict" && "$open" -gt 0 ]]; then
     return 1
   fi
 }
@@ -1195,6 +1328,9 @@ case "${1:-}" in
     ;;
   doctor)
     doctor
+    ;;
+  completion-audit)
+    completion_audit "${2:-}"
     ;;
   inventory)
     inventory

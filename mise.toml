@@ -95,6 +95,14 @@ run = "./scripts/ai-stack validate"
 description = "Run AI stack architecture and generated-artifact checks"
 run = "./scripts/ai-stack doctor"
 
+[tasks."ai:completion:audit"]
+description = "Report requirement coverage for the personal AI stack consolidation goal"
+run = "./scripts/ai-stack completion-audit"
+
+[tasks."ai:completion:audit:strict"]
+description = "Fail unless the personal AI stack consolidation goal has complete evidence"
+run = "./scripts/ai-stack completion-audit --strict"
+
 [tasks."ai:inventory"]
 description = "Show personal AI stack inventory"
 run = "./scripts/ai-stack inventory"

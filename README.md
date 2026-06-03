@@ -42,6 +42,7 @@ mise run install
 mise run reset:dry-run
 mise run ai:validate
 mise run ai:doctor
+mise run ai:completion:audit
 mise run ai:feedback
 mise run ai:report
 mise run migration:go-task:retire-check

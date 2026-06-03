@@ -35,6 +35,20 @@ packages/ai/
 4. Secrets stay in local files, keychains, or app-owned auth stores.
 5. Project-specific behavior belongs in the project unless it is broadly reusable.
 
+## Completion Audit
+
+Run the ongoing goal audit:
+
+```bash
+mise run ai:completion:audit
+```
+
+Run strict mode only when the full consolidation goal should be complete:
+
+```bash
+mise run ai:completion:audit:strict
+```
+
 ## MCP
 
 `mcp/servers.json` contains only public-safe stdio servers. Private HTTP MCP servers, auth headers, and company-specific URLs belong in local client config.

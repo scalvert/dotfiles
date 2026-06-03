@@ -130,6 +130,7 @@ Local checkout:
 ./install
 mise run ai:validate
 mise run ai:doctor
+mise run ai:completion:audit
 mise run ai:inventory
 mise run ai:live-inventory
 mise run ai:review
@@ -148,6 +149,7 @@ mise run ai:reset:commands:dry-run
 ```
 
 The bootstrap path uses mise. The old go-task task graph remains as a temporary compatibility layer while parity is verified.
+Use `mise run ai:completion:audit` to inspect goal coverage. Use `mise run ai:completion:audit:strict` only when you expect the full consolidation goal, including fresh-machine verification, to be complete.
 
 ## Reset
 
@@ -251,7 +253,8 @@ Private HTTP MCP servers, OAuth headers, company URLs, and project-specific MCP 
 
 ## Next Increments
 
-1. Apply reviewed command shims and archive superseded manual Plannotator shims.
-2. Add a monthly review command that writes proposed archive/consolidation patches.
-3. Promote reusable prompt text from client-specific wrappers into `packages/ai/prompts`.
-4. Decide whether missing `find-skills` and `agent-browser` lock entries should be reinstalled or removed from the lockfile.
+1. Run and record a sanitized fresh-machine bootstrap/reset verification under `packages/ai/bootstrap-verifications/`.
+2. Remove or archive remaining go-task compatibility files after that verification.
+3. Apply reviewed command shims and archive superseded manual Plannotator shims.
+4. Promote reusable prompt text from client-specific wrappers into `packages/ai/prompts`.
+5. Decide whether missing `find-skills` and `agent-browser` lock entries should be reinstalled or removed from the lockfile.
