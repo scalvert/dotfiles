@@ -20,7 +20,13 @@ Run a monthly review:
 4. Propose prompt edits as patches.
 5. Archive superseded material.
 
-Use `task ai:skill:drift` to compare the live managed-skill lockfile against `packages/ai/skills/managed-lock.snapshot.tsv`. Treat missing local directories, missing upstream hashes, or local content hash changes as review items, not automatic delete signals.
+Preferred command:
+
+```bash
+mise run ai:feedback
+```
+
+Use `mise run ai:skill:drift` to compare the live managed-skill lockfile against the local generated `packages/ai/skills/managed-lock.snapshot.tsv`. Treat missing local directories, missing upstream hashes, or local content hash changes as review items, not automatic delete signals.
 
 ## Rules
 

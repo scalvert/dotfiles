@@ -23,6 +23,8 @@ Native mise tasks now exist for:
 - `system:install`
 - `binutils:*`
 - `dotfiles:install`
+- `reset`
+- `reset:dry-run`
 - `shell:update`
 - `nvim:*`
 - `mise:install`
@@ -36,7 +38,9 @@ mise trust
 mise tasks ls --local
 mise run bootstrap:preflight
 mise run ai:validate
+mise run ai:feedback
 mise run ai:report
+mise run reset:dry-run
 mise run mise:outdated
 ```
 

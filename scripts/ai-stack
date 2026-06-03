@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|generate-commands|diff-commands|install-commands|reset-commands|sync-mcp> [--apply]"
+  echo "usage: scripts/ai-stack <validate|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|generate-commands|diff-commands|install-commands|reset-commands|reset|sync-mcp> [--apply]"
 }
 
 validate() {
@@ -158,7 +158,6 @@ live_inventory() {
 review() {
   local tmpdir
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/ai-stack-review.XXXXXX")"
-  trap 'rm -rf "$tmpdir"' RETURN
 
   (find "$HOME/.claude/skills" "$HOME/.agents/skills" "$HOME/.codex/skills" "$HOME/.cursor/skills-cursor" \
     -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null |
@@ -226,6 +225,8 @@ review() {
 
   echo "Next safe action:"
   echo "  review generated command shim diffs, then install reviewed shims and archive duplicate manual shims"
+
+  rm -rf "$tmpdir"
 }
 
 review_report() {
@@ -377,7 +378,6 @@ skill_drift() {
 
   local tmpdir
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/ai-stack-skill-drift.XXXXXX")"
-  trap 'rm -rf "$tmpdir"' RETURN
 
   emit_skill_snapshot > "$tmpdir/current.tsv"
 
@@ -395,6 +395,8 @@ skill_drift() {
 
   echo "Managed skills missing local directory:"
   awk -F '\t' '$6 == "-" { print "  " $1 }' "$tmpdir/current.tsv"
+
+  rm -rf "$tmpdir"
 }
 
 generate_commands() {
@@ -559,15 +561,29 @@ reverse_file() {
   fi
 }
 
+state_home() {
+  echo "${XDG_STATE_HOME:-$HOME/.local/state}/ai-stack"
+}
+
+command_manifest_path() {
+  echo "$(state_home)/command-install-manifest.tsv"
+}
+
+legacy_command_manifest_path() {
+  echo "$HOME/.config/ai/state/command-install-manifest.tsv"
+}
+
 install_commands() {
   local mode="dry-run"
   if is_apply "${1:-}"; then
     mode="apply"
   fi
 
-  local state_dir="$HOME/.config/ai/state"
-  local backup_root="$HOME/.config/ai/backups/commands/$(timestamp)"
-  local manifest="$state_dir/command-install-manifest.tsv"
+  local state_dir
+  state_dir="$(state_home)"
+  local backup_root="$state_dir/backups/commands/$(timestamp)"
+  local manifest
+  manifest="$(command_manifest_path)"
 
   echo "Command shim install ($mode)"
   echo
@@ -630,7 +646,11 @@ reset_commands() {
     mode="apply"
   fi
 
-  local manifest="$HOME/.config/ai/state/command-install-manifest.tsv"
+  local manifest
+  manifest="$(command_manifest_path)"
+  if [[ ! -f "$manifest" && -f "$(legacy_command_manifest_path)" ]]; then
+    manifest="$(legacy_command_manifest_path)"
+  fi
 
   echo "Command shim reset ($mode)"
   echo
@@ -673,6 +693,56 @@ reset_commands() {
   fi
 }
 
+reset_ai_stack() {
+  local mode="dry-run"
+  if is_apply "${1:-}"; then
+    mode="apply"
+  fi
+
+  echo "AI stack reset ($mode)"
+  echo
+  reset_commands "${1:-}"
+  echo
+
+  local ai_link="$HOME/.config/ai"
+  if [[ -L "$ai_link" ]]; then
+    local current current_physical ai_physical
+    current="$(readlink "$ai_link")"
+    current_physical="$(cd "$current" 2>/dev/null && pwd -P || printf '%s' "$current")"
+    ai_physical="$(cd "$ai_dir" 2>/dev/null && pwd -P || printf '%s' "$ai_dir")"
+
+    if [[ "$current_physical" != "$ai_physical" ]]; then
+      echo "skip unmanaged AI config symlink: $ai_link -> $current"
+      echo "local state directory: $(state_home)"
+      echo "State is retained for auditability; remove it manually only after review."
+      return 0
+    fi
+
+    if [[ "$mode" == "apply" ]]; then
+      rm "$ai_link"
+      echo "removed managed AI config link: $ai_link"
+    else
+      echo "would remove managed AI config link: $ai_link"
+    fi
+  elif [[ -e "$ai_link" ]]; then
+    echo "skip unmanaged AI config path: $ai_link"
+  else
+    echo "missing AI config path: $ai_link"
+  fi
+
+  echo "local state directory: $(state_home)"
+  echo "State is retained for auditability; remove it manually only after review."
+}
+
+feedback() {
+  review
+  echo
+  if ! skill_drift; then
+    echo
+    echo "Managed skill drift could not be checked. Run snapshot-skills after installing managed skills."
+  fi
+}
+
 sync_mcp() {
   cp "$ai_dir/mcp/servers.json" "$repo_root/packages/mcp/servers.json"
   echo "Synced packages/ai/mcp/servers.json -> packages/mcp/servers.json"
@@ -700,6 +770,9 @@ case "${1:-}" in
   skill-drift)
     skill_drift
     ;;
+  feedback)
+    feedback
+    ;;
   generate-commands)
     generate_commands
     ;;
@@ -711,6 +784,9 @@ case "${1:-}" in
     ;;
   reset-commands)
     reset_commands "${2:-}"
+    ;;
+  reset)
+    reset_ai_stack "${2:-}"
     ;;
   sync-mcp)
     sync_mcp

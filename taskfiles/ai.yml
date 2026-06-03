@@ -27,6 +27,11 @@ tasks:
     cmds:
       - ./scripts/ai-stack review
 
+  feedback:
+    desc: Run AI stack review plus managed skill drift checks
+    cmds:
+      - ./scripts/ai-stack feedback
+
   report:
     desc: Write a dated AI stack review report under packages/ai/reviews
     cmds:
@@ -71,6 +76,16 @@ tasks:
     desc: Restore/remove generated command shims using the install manifest
     cmds:
       - ./scripts/ai-stack reset-commands --apply
+
+  reset:dry-run:
+    desc: Preview resetting installed AI command shims and managed AI config link
+    cmds:
+      - ./scripts/ai-stack reset
+
+  reset:
+    desc: Reset installed AI command shims and managed AI config link
+    cmds:
+      - ./scripts/ai-stack reset --apply
 
   sync:mcp:
     desc: Sync shared MCP profile into packages/mcp

@@ -85,6 +85,16 @@ tasks:
     cmds:
       - task: setup:config
 
+  reset:dry-run:
+    desc: Preview removing managed dotfile symlinks
+    cmds:
+      - ./scripts/dotfiles reset
+
+  reset:
+    desc: Remove managed dotfile symlinks without deleting app state or secrets
+    cmds:
+      - ./scripts/dotfiles reset --apply
+
   setup:config:
     desc: Setup configuration files
     internal: true

@@ -90,6 +90,7 @@ The current review command reports duplicate skill names, duplicate command name
 
 ```bash
 mise run ai:review
+mise run ai:feedback
 ```
 
 Managed external skills are tracked with a lightweight lock snapshot:
@@ -138,14 +139,28 @@ The bootstrap path uses mise. The old go-task task graph remains as a temporary 
 
 ## Reset
 
-This reset is intentionally non-destructive. It removes symlinks and generated config links but leaves app-owned state and auth alone unless you remove them manually.
+This reset is intentionally non-destructive. It removes only repo-managed symlinks and generated command shims that have an install manifest. It leaves copied local templates, app-owned state, auth, caches, and secrets alone.
 
 ```bash
-rm ~/.config/ai
-rm ~/.config/mcp
+mise run ai:reset:dry-run
+mise run reset:dry-run
+```
+
+Apply after reviewing the dry run:
+
+```bash
+mise run ai:reset
+mise run reset
+```
+
+Reinstall managed links:
+
+```bash
 mise run dotfiles:install
 mise run ai:validate
 ```
+
+Command shim install manifests and backups live under `${XDG_STATE_HOME:-~/.local/state}/ai-stack`, not under `~/.config/ai`, so they do not get written into the dotfiles checkout when `~/.config/ai` is symlinked to `packages/ai`.
 
 Manual cleanup candidates, only after archiving and review:
 
@@ -181,7 +196,7 @@ Apply install after review:
 mise run ai:install:commands
 ```
 
-The installer writes a manifest to `~/.config/ai/state/command-install-manifest.tsv` and backs up overwritten files under `~/.config/ai/backups/commands/<timestamp>`.
+The installer writes a manifest to `${XDG_STATE_HOME:-~/.local/state}/ai-stack/command-install-manifest.tsv` and backs up overwritten files under `${XDG_STATE_HOME:-~/.local/state}/ai-stack/backups/commands/<timestamp>`.
 
 Preview reset:
 

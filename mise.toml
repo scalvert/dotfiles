@@ -10,6 +10,14 @@ run = "mise tasks ls --local"
 description = "Complete system setup"
 depends = ["system:install", "binutils:install", "dotfiles:install", "ai:install", "nvim:restore"]
 
+[tasks."reset:dry-run"]
+description = "Preview removing managed dotfile symlinks"
+run = "./scripts/dotfiles reset"
+
+[tasks.reset]
+description = "Remove managed dotfile symlinks without deleting app state or secrets"
+run = "./scripts/dotfiles reset --apply"
+
 [tasks."bootstrap:preflight"]
 description = "Run preflight checks before installation"
 run = "./scripts/bootstrap preflight"
@@ -83,6 +91,10 @@ run = "./scripts/ai-stack live-inventory"
 description = "Report AI stack consolidation and archive recommendations"
 run = "./scripts/ai-stack review"
 
+[tasks."ai:feedback"]
+description = "Run AI stack review plus managed skill drift checks"
+run = "./scripts/ai-stack feedback"
+
 [tasks."ai:report"]
 description = "Write a dated AI stack review report under packages/ai/reviews"
 run = "./scripts/ai-stack report"
@@ -118,6 +130,14 @@ run = "./scripts/ai-stack reset-commands"
 [tasks."ai:reset:commands"]
 description = "Restore/remove generated command shims using the install manifest"
 run = "./scripts/ai-stack reset-commands --apply"
+
+[tasks."ai:reset:dry-run"]
+description = "Preview resetting installed AI command shims and managed AI config link"
+run = "./scripts/ai-stack reset"
+
+[tasks."ai:reset"]
+description = "Reset installed AI command shims and managed AI config link"
+run = "./scripts/ai-stack reset --apply"
 
 [tasks."ai:sync:mcp"]
 description = "Sync shared MCP profile into packages/mcp"

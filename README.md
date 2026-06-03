@@ -39,7 +39,9 @@ Native mise tasks are the preferred task interface. See [Mise Task Migration](do
 mise tasks ls --local
 mise run bootstrap:status
 mise run install
+mise run reset:dry-run
 mise run ai:validate
+mise run ai:feedback
 mise run ai:report
 ```
 

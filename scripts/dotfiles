@@ -41,6 +41,78 @@ link_dotfile() {
   fi
 }
 
+dotfile_entries() {
+  cat <<EOF
+packages/nvim|$HOME/.config/nvim
+packages/starship/pure.toml|$HOME/.config/starship.toml
+packages/starship/|$HOME/.config/starship
+packages/fish/|$HOME/.config/fish
+packages/atuin|$HOME/.config/atuin
+packages/git/gitconfig|$HOME/.gitconfig
+packages/git/gitignore_global|$HOME/.gitignore_global
+packages/gh/config.yml|$HOME/.config/gh/config.yml
+packages/tmux/tmux.conf|$HOME/.tmux.conf
+packages/cargo/config.toml|$HOME/.cargo/config.toml
+packages/binutils/config/|$HOME/.config/binutils
+packages/wezterm/|$HOME/.config/wezterm
+packages/ghostty/|$HOME/.config/ghostty
+packages/ssh/rc|$HOME/.ssh/rc
+packages/mise/|$HOME/.config/mise
+packages/mcp/|$HOME/.config/mcp
+packages/ai/|$HOME/.config/ai
+packages/hammerspoon/|$HOME/.hammerspoon
+EOF
+
+  if [[ "$(platform)" == "darwin" ]]; then
+    cat <<EOF
+packages/vscode/settings.json|$HOME/Library/Application Support/Code/User/settings.json
+packages/vscode/keybindings.json|$HOME/Library/Application Support/Code/User/keybindings.json
+packages/vscode/snippets|$HOME/Library/Application Support/Code/User/snippets
+packages/tealdeer/config.toml|$HOME/Library/Application Support/tealdeer/config.toml
+packages/jj/|$HOME/Library/Application Support/jj
+packages/alfred/snippets|$HOME/Library/Application Support/Alfred/Alfred.alfredpreferences/snippets
+packages/iterm2/|$HOME/.config/iterm2
+EOF
+  fi
+
+  if [[ "$(platform)" == "linux" ]]; then
+    echo "packages/jj/|$HOME/.config/jj"
+  fi
+}
+
+remove_link_if_managed() {
+  local src="$repo_root/$1"
+  local dest="$2"
+  local mode="${3:-dry-run}"
+
+  if [[ ! -L "$dest" ]]; then
+    if [[ -e "$dest" ]]; then
+      echo "skip non-symlink: $dest"
+    else
+      echo "missing: $dest"
+    fi
+    return 0
+  fi
+
+  local current
+  current="$(readlink "$dest")"
+  local current_physical src_physical
+  current_physical="$(cd "$current" 2>/dev/null && pwd -P || printf '%s' "$current")"
+  src_physical="$(cd "$src" 2>/dev/null && pwd -P || printf '%s' "$src")"
+
+  if [[ "$current_physical" != "$src_physical" ]]; then
+    echo "skip unmanaged symlink: $dest -> $current"
+    return 0
+  fi
+
+  if [[ "$mode" == "apply" ]]; then
+    rm "$dest"
+    echo "removed: $dest"
+  else
+    echo "would remove: $dest"
+  fi
+}
+
 copy_dotfile() {
   local src="$repo_root/$1"
   local dest="$2"
@@ -147,15 +219,40 @@ install() {
   refresh_shell
 }
 
+reset() {
+  local mode="dry-run"
+  if [[ "${1:-}" == "--apply" ]]; then
+    mode="apply"
+  fi
+
+  echo "Dotfiles reset ($mode)"
+  echo
+  echo "Only symlinks that point back to this checkout are removed."
+  echo "Copied local templates, app state, auth, caches, and secrets are left untouched."
+  echo
+
+  dotfile_entries | while IFS='|' read -r src dest; do
+    remove_link_if_managed "$src" "$dest" "$mode"
+  done
+
+  if [[ "$mode" == "dry-run" ]]; then
+    echo
+    echo "Dry run only. Re-run with --apply to remove managed symlinks."
+  fi
+}
+
 case "${1:-}" in
   install)
     install
+    ;;
+  reset)
+    reset "${2:-}"
     ;;
   refresh-shell)
     refresh_shell
     ;;
   *)
-    echo "usage: scripts/dotfiles <install|refresh-shell>" >&2
+    echo "usage: scripts/dotfiles <install|reset|refresh-shell> [--apply]" >&2
     exit 2
     ;;
 esac
