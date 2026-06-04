@@ -211,3 +211,11 @@ run = "mise outdated -l"
 [tasks."migration:go-task:retire-check"]
 description = "Verify primary surfaces no longer depend on go-task"
 run = "./scripts/mise-migration go-task-retire-check"
+
+[tasks."migration:go-task:archive-compat:dry-run"]
+description = "Preview archiving legacy go-task compatibility files after bootstrap verification"
+run = "./scripts/mise-migration go-task-archive-compat"
+
+[tasks."migration:go-task:archive-compat"]
+description = "Archive legacy go-task compatibility files after bootstrap verification"
+run = "./scripts/mise-migration go-task-archive-compat --apply"

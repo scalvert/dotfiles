@@ -46,30 +46,13 @@ mise run ai:completion:audit
 mise run ai:feedback
 mise run ai:report
 mise run migration:go-task:retire-check
+mise run migration:go-task:archive-compat:dry-run
 ```
 
-The legacy go-task task graph remains only as a migration compatibility layer:
-
-```console
-task: Available tasks for this project:
-* install:                Complete system setup - installs dependencies, builds utilities, configures dotfiles, and sets up Neovim
-* binutils:install:       Build binutils and set up symlinks
-* bootstrap:preflight:    Run preflight checks before installation
-* bootstrap:status:       Show current system status
-* brew:cleanup:           Remove unused brew dependencies
-* brew:install:           Install Homebrew and tools defined in Brewfile
-* brew:update:            Update Brewfile with current brew packages and commit changes
-* brew:upgrade:           Update Homebrew and upgrade all installed packages
-* dotfiles:install:       Install dotfiles      (aliases: dot:install)
-* nvim:commit:            Commits the lazy-lock.json file if changed
-* nvim:restore:           Restores Neovim plugins to the state in lazy-lock.json
-* nvim:update:            Updates Neovim plugins, CLI utils, and TreeSitter plugins
-* secrets:export:         Export secrets to an encrypted GPG tarball
-* secrets:import:         Import secrets from an encrypted GPG tarball
-* secrets:list:           List files that would be exported
-* shell:update:           Refreshes shell environment by updating startup cache and clearing completion cache
-* system:install:         Install all system dependencies
-```
+The legacy go-task graph is no longer a preferred interface. `Taskfile.dist.yml`
+and `taskfiles/` remain only as temporary compatibility until a fresh bootstrap
+verification record exists, then `mise run migration:go-task:archive-compat`
+archives them under `archive/go-task/compatibility/`.
 
 ## What's Included
 
@@ -160,14 +143,8 @@ set -gx GITHUB_TOKEN "ghp_..."
 ├── Brewfile                # Homebrew packages
 ├── mise.toml               # Primary task runner config
 ├── scripts/                # Script-backed mise task implementations
-├── Taskfile.dist.yml       # Legacy go-task compatibility config
-├── taskfiles/              # Legacy task definitions during migration
-│   ├── bootstrap.yml       # Preflight checks
-│   ├── brew.yml            # Homebrew tasks
-│   ├── dotfiles.yml        # Dotfile linking
-│   ├── nvim.yml            # Neovim tasks
-│   ├── secrets.yml         # Secrets management
-│   └── ...
+├── Taskfile.dist.yml       # Temporary legacy go-task compatibility config
+├── taskfiles/              # Temporary legacy task definitions during migration
 ├── packages/               # Configuration packages
 │   ├── fish/               # Fish shell config
 │   │   ├── config.fish

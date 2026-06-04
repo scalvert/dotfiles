@@ -4,7 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
-  echo "usage: scripts/mise-migration <go-task-retire-check>" >&2
+  echo "usage: scripts/mise-migration <go-task-retire-check|go-task-archive-compat> [--apply]" >&2
 }
 
 ok() {
@@ -69,6 +69,68 @@ check_mise_task() {
   fi
 }
 
+valid_bootstrap_verification_record() {
+  local record="$1"
+  local required_command
+
+  grep -Eq '^date: [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$record" || return 1
+  grep -q '^result: pass$' "$record" || return 1
+  grep -Eq '^platform: (darwin|linux)$' "$record" || return 1
+  grep -Eq '^arch: (arm64|x86_64)$' "$record" || return 1
+  grep -Eq '^dotfiles_commit: [0-9a-f]{7,40}$' "$record" || return 1
+  grep -Eq '^environment: (fresh-machine|disposable-vm|clean-user)$' "$record" || return 1
+  grep -Eq '^verified_by: [A-Za-z0-9._-]+$' "$record" || return 1
+
+  if grep -Eq 'YYYY-MM-DD|SHORT_SHA|darwin\|linux|arm64\|x86_64|fresh-machine\|disposable-vm\|clean-user' "$record"; then
+    return 1
+  fi
+
+  for required_command in \
+    'curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash' \
+    'mise run ai:validate' \
+    'mise run ai:doctor' \
+    'mise run ai:completion:audit' \
+    'mise run migration:go-task:retire-check' \
+    'mise run ai:reset:dry-run' \
+    'mise run reset:dry-run'; do
+    grep -Fq "$required_command" "$record" || return 1
+  done
+}
+
+bootstrap_verification_record() {
+  local verification_dir="$repo_root/packages/ai/bootstrap-verifications"
+  local record
+
+  if [[ ! -d "$verification_dir" ]]; then
+    return 1
+  fi
+
+  while read -r record; do
+    if valid_bootstrap_verification_record "$record"; then
+      printf '%s\n' "$record"
+      return 0
+    fi
+  done < <(find "$verification_dir" -maxdepth 1 -type f -name '*.md' ! -name 'README.md' ! -name 'TEMPLATE.md' -print | sort)
+
+  return 1
+}
+
+check_go_task_compatibility_location() {
+  local active_taskfile="$repo_root/Taskfile.dist.yml"
+  local active_taskfiles="$repo_root/taskfiles"
+  local archived_taskfile="$repo_root/archive/go-task/compatibility/Taskfile.dist.yml"
+  local archived_taskfiles="$repo_root/archive/go-task/compatibility/taskfiles"
+
+  if [[ -e "$active_taskfile" || -d "$active_taskfiles" ]]; then
+    check_path_exists "$active_taskfile" "legacy Taskfile.dist.yml still available for compatibility" || return 1
+    check_path_exists "$active_taskfiles" "legacy taskfiles still available for compatibility" || return 1
+    return 0
+  fi
+
+  check_path_exists "$archived_taskfile" "legacy Taskfile.dist.yml archived" || return 1
+  check_path_exists "$archived_taskfiles" "legacy taskfiles archived" || return 1
+}
+
 go_task_retire_check() {
   local failures=0
   local tmpdir task_list
@@ -105,6 +167,8 @@ go_task_retire_check() {
     ai:validate \
     ai:doctor \
     ai:bootstrap:verify \
+    migration:go-task:archive-compat \
+    migration:go-task:archive-compat:dry-run \
     reset:dry-run; do
     check_mise_task "$task" "$task_list" || failures=$((failures + 1))
   done
@@ -116,8 +180,7 @@ go_task_retire_check() {
   check_no_match 'brew "go-task"|brew "task"|go-task' "$repo_root/Brewfile" "Brewfile does not install go-task" || failures=$((failures + 1))
 
   check_path_missing "$repo_root/Taskfile.yml" "root Taskfile.yml is not active" || failures=$((failures + 1))
-  check_path_exists "$repo_root/Taskfile.dist.yml" "legacy Taskfile.dist.yml still available for compatibility" || failures=$((failures + 1))
-  check_path_exists "$repo_root/taskfiles" "legacy taskfiles still available for compatibility" || failures=$((failures + 1))
+  check_go_task_compatibility_location || failures=$((failures + 1))
   check_path_exists "$repo_root/archive/go-task/README.md" "go-task archive exists" || failures=$((failures + 1))
 
   rm -rf "$tmpdir"
@@ -125,16 +188,84 @@ go_task_retire_check() {
   echo
   if [[ "$failures" -eq 0 ]]; then
     echo "Primary go-task surfaces are retired."
-    echo "Compatibility Taskfiles remain until a fresh-machine mise bootstrap is verified."
+    if [[ -e "$repo_root/Taskfile.dist.yml" || -d "$repo_root/taskfiles" ]]; then
+      echo "Compatibility Taskfiles remain until a fresh-machine mise bootstrap is verified."
+    else
+      echo "Compatibility Taskfiles are archived under archive/go-task/compatibility."
+    fi
   else
     echo "go-task retirement check: $failures failure(s)"
     return 1
   fi
 }
 
+go_task_archive_compat() {
+  local mode="dry-run"
+  local verification_record
+  local archive_dir="$repo_root/archive/go-task/compatibility"
+  local sources=(
+    "Taskfile.dist.yml"
+    "taskfiles"
+  )
+  local source dest
+
+  if [[ "${1:-}" == "--apply" ]]; then
+    mode="apply"
+  elif [[ -n "${1:-}" ]]; then
+    echo "unknown go-task archive option: $1" >&2
+    return 2
+  fi
+
+  verification_record="$(bootstrap_verification_record || true)"
+
+  echo "go-task compatibility archive ($mode)"
+  echo
+
+  if [[ -z "$verification_record" ]]; then
+    echo "fresh-machine bootstrap verification record not found"
+    echo "run AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify first"
+    if [[ "$mode" == "apply" ]]; then
+      return 1
+    fi
+  else
+    echo "verified bootstrap evidence: ${verification_record#$repo_root/}"
+  fi
+
+  for source in "${sources[@]}"; do
+    dest="$archive_dir/$source"
+    if [[ -e "$repo_root/$source" ]]; then
+      if [[ -e "$dest" ]]; then
+        echo "archive destination already exists: ${dest#$repo_root/}" >&2
+        return 1
+      fi
+
+      if [[ "$mode" == "apply" ]]; then
+        mkdir -p "$archive_dir"
+        mv "$repo_root/$source" "$dest"
+        echo "archived: $source -> ${dest#$repo_root/}"
+      else
+        echo "would archive: $source -> ${dest#$repo_root/}"
+      fi
+    elif [[ -e "$dest" ]]; then
+      echo "already archived: ${dest#$repo_root/}"
+    else
+      echo "missing legacy source and archive: $source" >&2
+      return 1
+    fi
+  done
+
+  if [[ "$mode" == "dry-run" ]]; then
+    echo
+    echo "Dry run only. Re-run with --apply after reviewing the plan."
+  fi
+}
+
 case "${1:-}" in
   go-task-retire-check)
     go_task_retire_check
+    ;;
+  go-task-archive-compat)
+    go_task_archive_compat "${2:-}"
     ;;
   *)
     usage

@@ -217,6 +217,7 @@ doctor() {
   doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
   doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
   doctor_check_grep 'migration:go-task:retire-check' "$repo_root/mise.toml" "mise go-task retirement check registered" || failures=$((failures + 1))
+  doctor_check_grep 'migration:go-task:archive-compat' "$repo_root/mise.toml" "mise go-task archive task registered" || failures=$((failures + 1))
 
   echo
   if [[ "$failures" -eq 0 ]]; then
@@ -595,6 +596,7 @@ completion_audit() {
   audit_mise_task "bootstrap:preflight" "bootstrap preflight task exists" || missing=$((missing + 1))
   audit_mise_task "ai:bootstrap:verify" "bootstrap verification recorder exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:retire-check" "go-task retirement check exists" || missing=$((missing + 1))
+  audit_mise_task "migration:go-task:archive-compat" "go-task compatibility archive task exists" || missing=$((missing + 1))
 
   audit_mise_task "reset:dry-run" "dotfiles reset dry-run task exists" || missing=$((missing + 1))
   audit_mise_task "reset" "dotfiles reset apply task exists" || missing=$((missing + 1))
@@ -604,7 +606,7 @@ completion_audit() {
 
   echo
   if [[ -d "$repo_root/taskfiles" || -e "$repo_root/Taskfile.dist.yml" ]]; then
-    audit_open "Legacy go-task compatibility files remain" "Run a real fresh-machine mise bootstrap/reset verification, then archive or remove Taskfile.dist.yml and taskfiles/."
+    audit_open "Legacy go-task compatibility files remain" "Run a real bootstrap verification, then run mise run migration:go-task:archive-compat."
     open=$((open + 1))
   fi
 
