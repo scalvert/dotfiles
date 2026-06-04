@@ -21,7 +21,13 @@ Do not commit:
 - full Homebrew, mise, shell, or app logs
 - private company URLs or internal repository names
 
-Preferred workflow:
+From an existing checkout, print the current-commit handoff:
+
+```bash
+mise run ai:bootstrap:verification:plan
+```
+
+On the verification machine or user account:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
@@ -35,6 +41,9 @@ test or `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=clean-user` for a clean local user
 account. The verifier requires the local bootstrap success marker written by
 the installer, runs the required gates, and writes a pass record only if every
 gate succeeds.
+
+`mise run ai:bootstrap:verification:plan` prints a current-commit runbook for
+the operator. It is not a verification result and does not count as proof.
 
 Do not treat a temporary `HOME` under an existing login session as a clean-user
 verification. Homebrew, macOS preferences, and other system-level tools are not

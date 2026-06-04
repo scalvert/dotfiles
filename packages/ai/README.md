@@ -70,11 +70,13 @@ Fresh-machine bootstrap verification records live in
 `bootstrap-verifications/`. After a real test run, generate a sanitized record:
 
 ```bash
+mise run ai:bootstrap:verification:plan
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify:preflight
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 ```
 
-The audit does not count the template itself as proof.
+The plan command prints an operator handoff for the current commit. The audit
+does not count the plan or the template itself as proof.
 
 ## MCP
 

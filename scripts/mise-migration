@@ -167,6 +167,8 @@ go_task_retire_check() {
     ai:validate \
     ai:doctor \
     ai:bootstrap:verify \
+    ai:bootstrap:verify:preflight \
+    ai:bootstrap:verification:plan \
     migration:go-task:archive-compat \
     migration:go-task:archive-compat:dry-run \
     reset:dry-run; do

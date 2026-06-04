@@ -153,11 +153,14 @@ Use `mise run ai:completion:audit` to inspect goal coverage. Use `mise run ai:co
 Record real fresh-machine bootstrap evidence after testing:
 
 ```bash
+mise run ai:bootstrap:verification:plan
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify:preflight
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 ```
 
 Use `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=disposable-vm` for a VM/container-style test or `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=clean-user` for a clean local user account. The verifier requires the local bootstrap success marker written by the installer, runs the required gates, and writes a sanitized pass record only if every gate succeeds.
+
+`mise run ai:bootstrap:verification:plan` prints a copy-pasteable handoff for the current commit and target environment. It is an operator aid only; it does not satisfy the completion audit.
 
 Do not use a temporary `HOME` inside an existing login session as the clean-user test. Homebrew and macOS preference writes are system/user-session level, so that does not provide enough isolation for bootstrap proof.
 

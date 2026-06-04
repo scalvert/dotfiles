@@ -46,6 +46,7 @@ mise run ai:usage:report
 mise run ai:prompt:plan
 mise run ai:archive:plan
 mise run ai:report
+mise run ai:bootstrap:verification:plan
 mise run ai:generate:mcp
 mise run ai:diff:mcp
 mise run secrets:list
@@ -58,6 +59,7 @@ mise run mise:outdated
 The go-task files still exist as compatibility while the rest of the migration is staged.
 Claude's default permission template and active zsh completion path no longer advertise `task`.
 Use `mise run migration:go-task:retire-check` to verify primary go-task surfaces stay retired.
+Use `mise run ai:bootstrap:verification:plan` to print the copy-pasteable handoff for the current commit.
 On a fresh machine, VM, or clean local user account, run `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify:preflight` before recording evidence, then run `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify` after `install` completes.
 After that record exists, run `mise run migration:go-task:archive-compat` to move `Taskfile.dist.yml` and `taskfiles/` under `archive/go-task/compatibility/`.
 

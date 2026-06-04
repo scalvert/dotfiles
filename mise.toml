@@ -117,6 +117,10 @@ run = "./scripts/ai-stack bootstrap-verify"
 description = "Check whether the current machine/user is suitable for bootstrap verification"
 run = "./scripts/ai-stack bootstrap-verify-preflight"
 
+[tasks."ai:bootstrap:verification:plan"]
+description = "Print the fresh-machine bootstrap verification handoff runbook"
+run = "./scripts/ai-stack bootstrap-verification-plan"
+
 [tasks."ai:inventory"]
 description = "Show personal AI stack inventory"
 run = "./scripts/ai-stack inventory"

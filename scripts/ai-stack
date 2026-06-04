@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|bootstrap-verify-preflight|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
+  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|bootstrap-verify-preflight|bootstrap-verification-plan|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
 }
 
 validate() {
@@ -215,6 +215,7 @@ doctor() {
   doctor_check_grep 'ai:archive:plan' "$repo_root/mise.toml" "mise archive plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:bootstrap:verify' "$repo_root/mise.toml" "mise bootstrap verification task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:bootstrap:verify:preflight' "$repo_root/mise.toml" "mise bootstrap verification preflight task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:bootstrap:verification:plan' "$repo_root/mise.toml" "mise bootstrap verification plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
   doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
   doctor_check_grep 'migration:go-task:retire-check' "$repo_root/mise.toml" "mise go-task retirement check registered" || failures=$((failures + 1))
@@ -482,6 +483,64 @@ bootstrap_verify_preflight() {
 
   echo
   echo "Bootstrap verification preflight: ok"
+}
+
+bootstrap_verification_plan() {
+  local environment verified_by output failure_output
+  local current_commit date worktree_state
+
+  parse_bootstrap_verification_options --environment "${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-fresh-machine}" "$@" || return $?
+
+  current_commit="$(git -C "$repo_root" rev-parse --short=12 HEAD)"
+  date="$(date -u +%Y-%m-%d)"
+  if [[ -z "$(git -C "$repo_root" status --porcelain)" ]]; then
+    worktree_state="clean"
+  else
+    worktree_state="dirty - commit and push before using this plan"
+  fi
+
+  cat <<EOF
+# Bootstrap Verification Plan
+
+Date: $date
+Commit: $current_commit
+Worktree: $worktree_state
+Environment: $environment
+Verified by: $verified_by
+
+Use this on a real fresh machine, disposable VM, or separate OS user account.
+Do not use a temporary HOME inside the current login session as clean-user proof.
+
+## 1. Bootstrap
+
+\`\`\`bash
+curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
+cd ~/workspace/personal/dotfiles
+\`\`\`
+
+## 2. Preflight
+
+\`\`\`bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=$environment AI_BOOTSTRAP_VERIFY_VERIFIED_BY=$verified_by mise run ai:bootstrap:verify:preflight
+\`\`\`
+
+## 3. Record Pass Or Failure
+
+\`\`\`bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=$environment AI_BOOTSTRAP_VERIFY_VERIFIED_BY=$verified_by mise run ai:bootstrap:verify
+\`\`\`
+
+The pass record should be committed from \`packages/ai/bootstrap-verifications/\`.
+Failure records, if generated, should be reviewed for sanitization before commit.
+
+## 4. Retire go-task Compatibility After Pass Record
+
+\`\`\`bash
+mise run migration:go-task:archive-compat:dry-run
+mise run migration:go-task:archive-compat
+mise run ai:completion:audit:strict
+\`\`\`
+EOF
 }
 
 bootstrap_failure_record_path() {
@@ -799,6 +858,7 @@ completion_audit() {
   audit_mise_task "bootstrap:preflight" "bootstrap preflight task exists" || missing=$((missing + 1))
   audit_mise_task "ai:bootstrap:verify" "bootstrap verification recorder exists" || missing=$((missing + 1))
   audit_mise_task "ai:bootstrap:verify:preflight" "bootstrap verification preflight exists" || missing=$((missing + 1))
+  audit_mise_task "ai:bootstrap:verification:plan" "bootstrap verification handoff task exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:retire-check" "go-task retirement check exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:archive-compat" "go-task compatibility archive task exists" || missing=$((missing + 1))
 
@@ -1922,6 +1982,10 @@ case "${1:-}" in
   bootstrap-verify-preflight)
     shift
     bootstrap_verify_preflight "$@"
+    ;;
+  bootstrap-verification-plan)
+    shift
+    bootstrap_verification_plan "$@"
     ;;
   inventory)
     inventory
