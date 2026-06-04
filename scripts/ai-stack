@@ -833,6 +833,7 @@ completion_audit() {
   audit_path "$ai_dir/prompts/commit-message.md" "Canonical prompt source exists" "packages/ai/prompts/commit-message.md" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/manifest.yaml" "Skill manifests exist for canonical skills" "packages/ai/skills/*/manifest.yaml" || missing=$((missing + 1))
   audit_path "$ai_dir/skills/plannotator/SKILL.md" "Repo-owned canonical skill body exists" "packages/ai/skills/plannotator/SKILL.md" || missing=$((missing + 1))
+  audit_path "$ai_dir/archive/2026-06-04-managed-skill-lock-orphans/README.md" "Managed skill lock orphan decision is archived" "packages/ai/archive/2026-06-04-managed-skill-lock-orphans/README.md" || missing=$((missing + 1))
   audit_path "$ai_dir/agents/README.md" "Agent representation is documented" "packages/ai/agents/README.md" || missing=$((missing + 1))
   audit_path "$ai_dir/agents/core/manifest.yaml" "Explicit agent definitions exist" "packages/ai/agents/core/manifest.yaml" || missing=$((missing + 1))
 
@@ -1144,7 +1145,7 @@ $("$0" diff-commands)
 
 1. Apply reviewed generated Plannotator command shims when ready.
 2. Archive superseded manual Plannotator shims after install is verified.
-3. Decide whether \`find-skills\` and \`agent-browser\` should be reinstalled or removed from the managed skill lockfile.
+3. Remove stale \`find-skills\` and \`agent-browser\` lock-only entries locally after reviewing the archive decision.
 4. Decide whether Linear skills need upstream lock hashes or whether local content hashes are sufficient.
 5. Classify or archive unowned live skills reported by \`mise run ai:review\`.
 EOF
@@ -1213,6 +1214,18 @@ snapshot_skills() {
   echo "Wrote managed skill snapshot: $snapshot"
 }
 
+sanitize_skill_snapshot_for_display() {
+  awk -F '\t' '
+    BEGIN { OFS = "\t" }
+    {
+      if ($3 ~ /^(git@|https?:\/\/)/) {
+        $3 = "private-source"
+      }
+      print
+    }
+  ' "$1"
+}
+
 skill_drift() {
   if ! command -v jq >/dev/null 2>&1; then
     echo "jq is required to inspect managed skills" >&2
@@ -1230,27 +1243,26 @@ skill_drift() {
   echo "Managed skill drift"
   echo
 
-  if [[ ! -f "$snapshot" ]]; then
-    echo "No snapshot found at $snapshot"
-    echo "Run: scripts/ai-stack snapshot-skills"
-    return 0
-  fi
-
   local tmpdir
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/ai-stack-skill-drift.XXXXXX")"
 
   emit_skill_snapshot > "$tmpdir/current.tsv"
+  sanitize_skill_snapshot_for_display "$tmpdir/current.tsv" > "$tmpdir/current.display.tsv"
 
   echo "Differences from committed snapshot:"
-  if cmp -s "$snapshot" "$tmpdir/current.tsv"; then
+  if [[ ! -f "$snapshot" ]]; then
+    echo "  no snapshot found at $snapshot"
+    echo "  run: mise run ai:snapshot:skills"
+  elif cmp -s "$snapshot" "$tmpdir/current.tsv"; then
     echo "  none"
   else
-    diff -u "$snapshot" "$tmpdir/current.tsv" || true
+    sanitize_skill_snapshot_for_display "$snapshot" > "$tmpdir/snapshot.display.tsv"
+    diff -u "$tmpdir/snapshot.display.tsv" "$tmpdir/current.display.tsv" || true
   fi
   echo
 
   echo "Managed skills without upstream lock hash:"
-  awk -F '\t' '$5 == "" || $5 == "-" { print "  " $1 " (" $3 ")" }' "$tmpdir/current.tsv"
+  awk -F '\t' '$5 == "" || $5 == "-" { print "  " $1 " (" $3 ")" }' "$tmpdir/current.display.tsv"
   echo
 
   echo "Managed skills missing local directory:"

@@ -277,4 +277,3 @@ Private HTTP MCP servers, OAuth headers, company URLs, and project-specific MCP 
 2. Remove or archive remaining go-task compatibility files after that verification.
 3. Apply reviewed command shims and archive superseded manual Plannotator shims.
 4. Promote reusable prompt text from client-specific wrappers into `packages/ai/prompts`.
-5. Decide whether missing `find-skills` and `agent-browser` lock entries should be reinstalled or removed from the lockfile.

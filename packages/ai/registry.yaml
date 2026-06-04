@@ -142,6 +142,13 @@ skills:
     sources:
       - ~/.agents/skills/gws-*
     target: managed external skill bundle with lock metadata
+  skill_discovery_helpers:
+    status: archive
+    sources:
+      - ~/.agents/.skill-lock.json find-skills
+      - ~/.agents/.skill-lock.json agent-browser
+    target: packages/ai/archive/2026-06-04-managed-skill-lock-orphans
+    notes: Lock-only entries without local skill directories; do not reinstall unless an active workflow reappears.
   cursor_builtin:
     status: keep-local
     sources:
@@ -210,5 +217,6 @@ lifecycle:
   archive:
     - inactive Goose/Crush/Superpowers experiments
     - duplicate command shims after generated replacements exist
+    - stale find-skills and agent-browser lock-only entries
   delete:
     - nothing yet
