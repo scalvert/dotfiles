@@ -161,6 +161,8 @@ Use `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=disposable-vm` for a VM/container-style tes
 
 Do not use a temporary `HOME` inside an existing login session as the clean-user test. Homebrew and macOS preference writes are system/user-session level, so that does not provide enough isolation for bootstrap proof.
 
+Failed bootstrap verification attempts are recorded under `packages/ai/bootstrap-verifications/failures/` for follow-up, but only non-template `result: pass` records in `packages/ai/bootstrap-verifications/` satisfy the completion audit.
+
 ## Reset
 
 This reset is intentionally non-destructive. It removes only repo-managed symlinks and generated command shims that have an install manifest. It leaves copied local templates, app-owned state, auth, caches, and secrets alone.

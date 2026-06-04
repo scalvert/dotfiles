@@ -363,6 +363,7 @@ parse_bootstrap_verification_options() {
   environment="${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-}"
   verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-${USER:-steve}}"
   output="${AI_BOOTSTRAP_VERIFY_OUTPUT:-}"
+  failure_output="${AI_BOOTSTRAP_VERIFY_FAILURE_OUTPUT:-}"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -390,6 +391,14 @@ parse_bootstrap_verification_options() {
         output="${2:-}"
         shift 2
         ;;
+      --failure-output)
+        if [[ "$#" -lt 2 ]]; then
+          echo "--failure-output requires a value" >&2
+          return 2
+        fi
+        failure_output="${2:-}"
+        shift 2
+        ;;
       *)
         echo "unknown bootstrap verification option: $1" >&2
         return 2
@@ -408,7 +417,7 @@ parse_bootstrap_verification_options() {
 }
 
 bootstrap_verify_preflight() {
-  local environment verified_by output
+  local environment verified_by output failure_output
   local failures=0
   local home_path="${HOME:-}"
   local config_paths
@@ -475,6 +484,80 @@ bootstrap_verify_preflight() {
   echo "Bootstrap verification preflight: ok"
 }
 
+bootstrap_failure_record_path() {
+  local environment="$1"
+  local stage="$2"
+
+  printf '%s/bootstrap-verifications/failures/%s-%s-%s.md\n' \
+    "$ai_dir" \
+    "$(date -u +%Y%m%dT%H%M%SZ)" \
+    "$environment" \
+    "$stage"
+}
+
+write_bootstrap_failure_record() {
+  local environment="$1"
+  local verified_by="$2"
+  local stage="$3"
+  local failed_command="$4"
+  local notes="$5"
+  local target="$6"
+  local date platform arch current_commit
+
+  date="$(date -u +%Y-%m-%d)"
+  platform="$(current_platform)"
+  arch="$(current_arch)"
+  current_commit="$(git -C "$repo_root" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
+
+  if [[ -z "$target" ]]; then
+    target="$(bootstrap_failure_record_path "$environment" "$stage")"
+  fi
+
+  if [[ -e "$target" ]]; then
+    echo "bootstrap failure record already exists: $target" >&2
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  cat > "$target" <<EOF
+---
+date: $date
+result: fail
+platform: $platform
+arch: $arch
+dotfiles_commit: $current_commit
+environment: $environment
+verified_by: $verified_by
+failed_stage: $stage
+failed_command: $failed_command
+---
+
+# Bootstrap Verification Failure - $date
+
+## Scope
+
+- mise-first bootstrap from \`install\`
+- bootstrap verification gates
+- non-destructive reset dry runs
+- go-task retirement gate
+
+## Result
+
+Pass/fail: fail
+
+Failed stage: $stage
+
+Failed command: $failed_command
+
+## Sanitized Notes
+
+- $notes
+- Raw logs, hostnames, usernames, absolute home paths, secrets, and private URLs were not recorded.
+EOF
+
+  echo "bootstrap failure record written: ${target#$repo_root/}" >&2
+}
+
 run_bootstrap_gate() {
   local command="$1"
 
@@ -506,7 +589,7 @@ run_bootstrap_gate() {
 }
 
 bootstrap_verify() {
-  local environment verified_by output
+  local environment verified_by output failure_output
   local marker marker_commit current_commit marker_source date platform arch
   local failed_command command
   local commands=(
@@ -519,12 +602,28 @@ bootstrap_verify() {
   )
 
   parse_bootstrap_verification_options "$@" || return $?
-  bootstrap_verify_preflight --environment "$environment" --verified-by "$verified_by" || return $?
+  if ! bootstrap_verify_preflight --environment "$environment" --verified-by "$verified_by"; then
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "preflight" \
+      "mise run ai:bootstrap:verify:preflight" \
+      "Preflight rejected the verification environment. Re-run the preflight directly for actionable details." \
+      "$failure_output" || true
+    return 1
+  fi
 
   marker="$(bootstrap_marker_path)"
   if [[ ! -f "$marker" ]]; then
     echo "bootstrap success marker is missing: $marker" >&2
     echo "run the top-level install command on the verification machine first" >&2
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "bootstrap-marker" \
+      "install" \
+      "Bootstrap success marker was missing, so the installer did not complete in this verification environment." \
+      "$failure_output" || true
     return 1
   fi
 
@@ -533,14 +632,35 @@ bootstrap_verify() {
   current_commit="$(git -C "$repo_root" rev-parse --short=12 HEAD)"
   if [[ -z "$marker_commit" || -z "$marker_source" ]]; then
     echo "bootstrap marker is missing required fields: $marker" >&2
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "bootstrap-marker" \
+      "install" \
+      "Bootstrap marker exists but is missing required metadata." \
+      "$failure_output" || true
     return 1
   fi
   if [[ "$marker_commit" != "$current_commit" ]]; then
     echo "bootstrap marker commit ($marker_commit) does not match current checkout ($current_commit)" >&2
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "bootstrap-marker" \
+      "install" \
+      "Bootstrap marker commit did not match the current checkout commit." \
+      "$failure_output" || true
     return 1
   fi
   if [[ "$marker_source" != "mise-install" ]]; then
     echo "bootstrap marker source is not mise-install: $marker_source" >&2
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "bootstrap-marker" \
+      "install" \
+      "Bootstrap marker source was not mise-install." \
+      "$failure_output" || true
     return 1
   fi
 
@@ -554,6 +674,13 @@ bootstrap_verify() {
 
   if [[ -n "$failed_command" ]]; then
     echo "bootstrap verification failed at: $failed_command" >&2
+    write_bootstrap_failure_record \
+      "$environment" \
+      "$verified_by" \
+      "verification-gate" \
+      "$failed_command" \
+      "A required post-bootstrap verification gate failed." \
+      "$failure_output" || true
     return 1
   fi
 

@@ -54,3 +54,9 @@ includes:
 - `environment: fresh-machine`, `environment: disposable-vm`, or `environment: clean-user`
 - `verified_by: steve`
 - the required command list from `TEMPLATE.md`
+
+## Failure Records
+
+`mise run ai:bootstrap:verify` writes sanitized failure records under
+`failures/` when preflight, installer-marker, or verification-gate checks fail.
+These records are for follow-up work only. They never count as completion proof.
