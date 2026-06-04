@@ -211,16 +211,16 @@ run = "./scripts/ai-stack sync-mcp"
 
 [tasks."mise:install"]
 description = "Install all mise-managed tools"
-run = "mise install"
+run = "./scripts/mise-tools install"
 
 [tasks."mise:update"]
 description = "Update all mise-managed tools"
-run = "mise up"
+run = "./scripts/mise-tools update"
 alias = "mise:up"
 
 [tasks."mise:outdated"]
 description = "List outdated mise-managed tools"
-run = "mise outdated -l"
+run = "./scripts/mise-tools outdated"
 
 [tasks."migration:go-task:retire-check"]
 description = "Verify primary surfaces no longer depend on go-task"

@@ -57,6 +57,18 @@ check_path_exists() {
   fi
 }
 
+check_file_executable() {
+  local path="$1"
+  local description="$2"
+
+  if [[ -x "$path" ]]; then
+    ok "$description"
+  else
+    fail "$description"
+    return 1
+  fi
+}
+
 check_mise_task() {
   local task="$1"
   local task_list="$2"
@@ -184,6 +196,7 @@ go_task_retire_check() {
   check_path_missing "$repo_root/Taskfile.yml" "root Taskfile.yml is not active" || failures=$((failures + 1))
   check_go_task_compatibility_location || failures=$((failures + 1))
   check_path_exists "$repo_root/archive/go-task/README.md" "go-task archive exists" || failures=$((failures + 1))
+  check_file_executable "$repo_root/scripts/mise-tools" "mise compatibility wrapper is executable" || failures=$((failures + 1))
 
   rm -rf "$tmpdir"
 

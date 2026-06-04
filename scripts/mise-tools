@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: scripts/mise-tools <install|update|outdated>" >&2
+}
+
+mise_supports() {
+  mise "$1" --help >/dev/null 2>&1
+}
+
+run_first_supported() {
+  local command_name="$1"
+  shift
+
+  local command
+  for command in "$@"; do
+    if mise_supports "$command"; then
+      mise "$command"
+      return 0
+    fi
+  done
+
+  echo "mise does not support any $command_name command variant: $*" >&2
+  echo "mise version: $(mise --version 2>/dev/null || printf 'unknown')" >&2
+  return 1
+}
+
+case "${1:-}" in
+  install)
+    run_first_supported "tool install" install upgrade up
+    ;;
+  update)
+    run_first_supported "tool update" upgrade up install
+    ;;
+  outdated)
+    if mise_supports outdated; then
+      mise outdated -l
+    else
+      echo "mise outdated is not supported by this mise version"
+      mise --version
+    fi
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
