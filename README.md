@@ -19,6 +19,18 @@ This will:
 4. Clone this repository
 5. Run the full installation through `mise run install`
 
+On macOS, the installer waits for Command Line Tools to become usable through
+`xcrun --find git`. If the Apple installer fails or stalls, finish or cancel the
+macOS prompt, then run:
+
+```bash
+sudo xcode-select --reset
+xcode-select --install
+xcrun --find git
+```
+
+After `xcrun --find git` succeeds, rerun the one-liner.
+
 ### Local Install
 
 ```sh

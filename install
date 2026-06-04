@@ -25,19 +25,38 @@ detect_platform() {
 }
 
 # Install Xcode Command Line Tools (macOS only)
+xcode_cli_ready() {
+  xcode-select -p &>/dev/null && xcrun --find git &>/dev/null
+}
+
 install_xcode_cli() {
   if [[ "$PLATFORM" != "darwin" ]]; then
     return 0
   fi
 
-  if xcode-select -p &>/dev/null; then
+  if xcode_cli_ready; then
     success "Xcode CLI tools already installed"
   else
-    info "Installing Xcode Command Line Tools..."
-    xcode-select --install
-    # Wait for installation to complete
-    until xcode-select -p &>/dev/null; do
+    local timeout="${XCODE_CLI_WAIT_SECONDS:-1800}"
+    local elapsed=0
+
+    info "Requesting Xcode Command Line Tools installation..."
+    xcode-select --install || warn "xcode-select --install did not start a new installer; one may already be running"
+    info "Complete the macOS installer prompt. This script will wait up to ${timeout}s."
+
+    until xcode_cli_ready; do
+      if [[ "$elapsed" -ge "$timeout" ]]; then
+        error "Xcode Command Line Tools are not ready after ${timeout}s"
+        echo ""
+        echo "Finish the macOS installer, then rerun the bootstrap command."
+        echo "If the installer failed, try:"
+        echo "  sudo xcode-select --reset"
+        echo "  xcode-select --install"
+        echo "  xcrun --find git"
+        exit 1
+      fi
       sleep 5
+      elapsed=$((elapsed + 5))
     done
     success "Xcode CLI tools installed"
   fi
