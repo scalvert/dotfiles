@@ -35,6 +35,11 @@ account. The verifier requires the local bootstrap success marker written by
 the installer, runs the required gates, and writes a pass record only if every
 gate succeeds.
 
+Do not treat a temporary `HOME` under an existing login session as a clean-user
+verification. Homebrew, macOS preferences, and other system-level tools are not
+fully isolated by changing `HOME`; use a real disposable VM, fresh machine, or
+separate OS user account.
+
 Manual fallback: copy `TEMPLATE.md` to a dated file after a real verification
 run. The completion audit only treats a non-template file as proof when it
 includes:

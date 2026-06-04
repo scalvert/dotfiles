@@ -158,6 +158,8 @@ AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 
 Use `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=disposable-vm` for a VM/container-style test or `AI_BOOTSTRAP_VERIFY_ENVIRONMENT=clean-user` for a clean local user account. The verifier requires the local bootstrap success marker written by the installer, runs the required gates, and writes a sanitized pass record only if every gate succeeds.
 
+Do not use a temporary `HOME` inside an existing login session as the clean-user test. Homebrew and macOS preference writes are system/user-session level, so that does not provide enough isolation for bootstrap proof.
+
 ## Reset
 
 This reset is intentionally non-destructive. It removes only repo-managed symlinks and generated command shims that have an install manifest. It leaves copied local templates, app-owned state, auth, caches, and secrets alone.

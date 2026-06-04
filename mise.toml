@@ -8,7 +8,13 @@ run = "mise tasks ls --local"
 
 [tasks.install]
 description = "Complete system setup"
-depends = ["system:install", "binutils:install", "dotfiles:install", "ai:install", "nvim:restore"]
+run = [
+  "mise run system:install",
+  "mise run binutils:install",
+  "mise run dotfiles:install",
+  "mise run ai:install",
+  "mise run nvim:restore",
+]
 
 [tasks."reset:dry-run"]
 description = "Preview removing managed dotfile symlinks"
