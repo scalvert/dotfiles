@@ -79,7 +79,7 @@ valid_bootstrap_verification_record() {
   grep -Eq '^arch: (arm64|x86_64)$' "$record" || return 1
   grep -Eq '^dotfiles_commit: [0-9a-f]{7,40}$' "$record" || return 1
   grep -Eq '^environment: (fresh-machine|disposable-vm|clean-user)$' "$record" || return 1
-  grep -Eq '^verified_by: [A-Za-z0-9._-]+$' "$record" || return 1
+  grep -Eq '^verified_by: [A-Za-z0-9_-]+$' "$record" || return 1
 
   if grep -Eq 'YYYY-MM-DD|SHORT_SHA|darwin\|linux|arm64\|x86_64|fresh-machine\|disposable-vm\|clean-user' "$record"; then
     return 1

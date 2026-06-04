@@ -52,7 +52,7 @@ includes:
 - `arch: arm64` or `arch: x86_64`
 - `dotfiles_commit: SHORT_SHA` replaced with a real 7-40 character commit SHA
 - `environment: fresh-machine`, `environment: disposable-vm`, or `environment: clean-user`
-- `verified_by: steve`
+- `verified_by: steve` or another sanitized handle matching `[A-Za-z0-9_-]+`
 - the required command list from `TEMPLATE.md`
 
 ## Failure Records

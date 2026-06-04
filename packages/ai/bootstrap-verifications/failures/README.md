@@ -16,4 +16,6 @@ Do not commit:
 - secrets, tokens, auth output, or key material
 - private company URLs or internal repository names
 
+Use a sanitized `verified_by` handle such as `steve`, not an OS login name.
+
 The pass-record audit intentionally ignores this directory.

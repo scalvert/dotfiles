@@ -293,7 +293,7 @@ valid_bootstrap_verification_record() {
   grep -Eq '^arch: (arm64|x86_64)$' "$record" || return 1
   grep -Eq '^dotfiles_commit: [0-9a-f]{7,40}$' "$record" || return 1
   grep -Eq '^environment: (fresh-machine|disposable-vm|clean-user)$' "$record" || return 1
-  grep -Eq '^verified_by: [A-Za-z0-9._-]+$' "$record" || return 1
+  grep -Eq '^verified_by: [A-Za-z0-9_-]+$' "$record" || return 1
 
   if grep -Eq 'YYYY-MM-DD|SHORT_SHA|darwin\|linux|arm64\|x86_64|fresh-machine\|disposable-vm\|clean-user' "$record"; then
     return 1
@@ -361,7 +361,7 @@ current_arch() {
 
 parse_bootstrap_verification_options() {
   environment="${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-}"
-  verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-${USER:-steve}}"
+  verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-steve}"
   output="${AI_BOOTSTRAP_VERIFY_OUTPUT:-}"
   failure_output="${AI_BOOTSTRAP_VERIFY_FAILURE_OUTPUT:-}"
 
@@ -410,8 +410,8 @@ parse_bootstrap_verification_options() {
     echo "bootstrap verification requires --environment fresh-machine|disposable-vm|clean-user" >&2
     return 2
   fi
-  if [[ ! "$verified_by" =~ ^[A-Za-z0-9._-]+$ ]]; then
-    echo "bootstrap verification verified_by must match [A-Za-z0-9._-]+" >&2
+  if [[ ! "$verified_by" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    echo "bootstrap verification verified_by must match [A-Za-z0-9_-]+" >&2
     return 2
   fi
 }
