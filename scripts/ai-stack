@@ -866,7 +866,8 @@ completion_audit() {
   audit_mise_task "reset" "dotfiles reset apply task exists" || missing=$((missing + 1))
   audit_mise_task "ai:reset:dry-run" "AI reset dry-run task exists" || missing=$((missing + 1))
   audit_mise_task "ai:reset" "AI reset apply task exists" || missing=$((missing + 1))
-  audit_grep 'This reset is intentionally non-destructive' "$repo_root/docs/ai-stack.md" "Reset process is documented" "docs/ai-stack.md reset section" || missing=$((missing + 1))
+  audit_grep '## Uninstall / Reset' "$repo_root/docs/ai-stack.md" "Uninstall/reset process is documented" "docs/ai-stack.md uninstall/reset section" || missing=$((missing + 1))
+  audit_grep 'There is no one-shot destructive uninstall task by design' "$repo_root/docs/ai-stack.md" "Uninstall boundary is documented" "docs/ai-stack.md uninstall/reset section" || missing=$((missing + 1))
 
   echo
   if [[ -d "$repo_root/taskfiles" || -e "$repo_root/Taskfile.dist.yml" ]]; then

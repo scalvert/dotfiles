@@ -166,9 +166,11 @@ Do not use a temporary `HOME` inside an existing login session as the clean-user
 
 Failed bootstrap verification attempts are recorded under `packages/ai/bootstrap-verifications/failures/` for follow-up, but only non-template `result: pass` records in `packages/ai/bootstrap-verifications/` satisfy the completion audit.
 
-## Reset
+## Uninstall / Reset
 
-This reset is intentionally non-destructive. It removes only repo-managed symlinks and generated command shims that have an install manifest. It leaves copied local templates, app-owned state, auth, caches, and secrets alone.
+There is no one-shot destructive uninstall task by design. The supported uninstall path is a reversible reset of repo-managed surfaces, followed by explicit manual cleanup for anything broader.
+
+The reset is intentionally non-destructive. It removes only repo-managed symlinks and generated command shims that have an install manifest. It leaves copied local templates, app-owned state, auth, caches, language runtimes, Homebrew packages, and secrets alone.
 
 ```bash
 mise run ai:reset:dry-run
@@ -181,6 +183,8 @@ Apply after reviewing the dry run:
 mise run ai:reset
 mise run reset
 ```
+
+Stop here if the goal is to detach this checkout while preserving the working machine. Do not remove state or packages until the dry-run output has been reviewed and any local-only files have been archived.
 
 Reinstall managed links:
 
@@ -197,6 +201,7 @@ Manual cleanup candidates, only after archiving and review:
 - duplicate Plannotator command shims in Claude/opencode
 - inactive experiment folders for Goose/Crush/Superpowers
 - stale generated skill caches
+- local state under `${XDG_STATE_HOME:-~/.local/state}/ai-stack` after reset manifests are no longer needed
 
 ## Generated Commands
 
