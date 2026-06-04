@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
+  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|bootstrap-verify-preflight|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
 }
 
 validate() {
@@ -214,6 +214,7 @@ doctor() {
   doctor_check_grep 'ai:prompt:plan' "$repo_root/mise.toml" "mise prompt plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:archive:plan' "$repo_root/mise.toml" "mise archive plan task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:bootstrap:verify' "$repo_root/mise.toml" "mise bootstrap verification task registered" || failures=$((failures + 1))
+  doctor_check_grep 'ai:bootstrap:verify:preflight' "$repo_root/mise.toml" "mise bootstrap verification preflight task registered" || failures=$((failures + 1))
   doctor_check_grep 'ai:reset' "$repo_root/mise.toml" "mise AI reset task registered" || failures=$((failures + 1))
   doctor_check_grep 'reset:dry-run' "$repo_root/mise.toml" "mise dotfiles reset dry-run task registered" || failures=$((failures + 1))
   doctor_check_grep 'migration:go-task:retire-check' "$repo_root/mise.toml" "mise go-task retirement check registered" || failures=$((failures + 1))
@@ -358,50 +359,10 @@ current_arch() {
   esac
 }
 
-run_bootstrap_gate() {
-  local command="$1"
-
-  printf '\nRunning: %s\n' "$command"
-  case "$command" in
-    'mise run ai:validate')
-      (cd "$repo_root" && mise run ai:validate)
-      ;;
-    'mise run ai:doctor')
-      (cd "$repo_root" && mise run ai:doctor)
-      ;;
-    'mise run ai:completion:audit')
-      (cd "$repo_root" && mise run ai:completion:audit)
-      ;;
-    'mise run migration:go-task:retire-check')
-      (cd "$repo_root" && mise run migration:go-task:retire-check)
-      ;;
-    'mise run ai:reset:dry-run')
-      (cd "$repo_root" && mise run ai:reset:dry-run)
-      ;;
-    'mise run reset:dry-run')
-      (cd "$repo_root" && mise run reset:dry-run)
-      ;;
-    *)
-      echo "unknown bootstrap verification gate: $command" >&2
-      return 2
-      ;;
-  esac
-}
-
-bootstrap_verify() {
-  local environment="${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-}"
-  local verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-${USER:-steve}}"
-  local output="${AI_BOOTSTRAP_VERIFY_OUTPUT:-}"
-  local marker marker_commit current_commit marker_source date platform arch
-  local failed_command command
-  local commands=(
-    'mise run ai:validate'
-    'mise run ai:doctor'
-    'mise run ai:completion:audit'
-    'mise run migration:go-task:retire-check'
-    'mise run ai:reset:dry-run'
-    'mise run reset:dry-run'
-  )
+parse_bootstrap_verification_options() {
+  environment="${AI_BOOTSTRAP_VERIFY_ENVIRONMENT:-}"
+  verified_by="${AI_BOOTSTRAP_VERIFY_VERIFIED_BY:-${USER:-steve}}"
+  output="${AI_BOOTSTRAP_VERIFY_OUTPUT:-}"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -444,6 +405,121 @@ bootstrap_verify() {
     echo "bootstrap verification verified_by must match [A-Za-z0-9._-]+" >&2
     return 2
   fi
+}
+
+bootstrap_verify_preflight() {
+  local environment verified_by output
+  local failures=0
+  local home_path="${HOME:-}"
+  local config_paths
+
+  parse_bootstrap_verification_options "$@" || return $?
+
+  echo "Bootstrap verification preflight"
+  echo
+  echo "environment: $environment"
+  echo "platform: $(current_platform)"
+  echo "arch: $(current_arch)"
+  echo "home: ${home_path:-unset}"
+  echo
+
+  if [[ "$environment" == "clean-user" ]]; then
+    case "$home_path" in
+      /tmp/*|/private/tmp/*|/var/folders/*|/private/var/folders/*)
+        echo "fail clean-user verification cannot use a temporary HOME: $home_path"
+        failures=$((failures + 1))
+        ;;
+      "")
+        echo "fail HOME is not set"
+        failures=$((failures + 1))
+        ;;
+      *)
+        echo "ok   HOME is not a temporary directory"
+        ;;
+    esac
+  fi
+
+  if [[ -n "$home_path" && ( -f "$home_path/.mise/config.toml" || -f "$home_path/.config/mise/config.toml" ) ]]; then
+    echo "warn user-level mise config exists; ensure this is intentional for the verification account"
+  else
+    echo "ok   no user-level mise config detected"
+  fi
+
+  if command -v mise >/dev/null 2>&1; then
+    config_paths="$(cd "$repo_root" && mise config ls --no-header 2>/dev/null | awk '{print $1}' || true)"
+    if grep -Fxq "$repo_root/mise.toml" <<<"$config_paths"; then
+      echo "ok   repo mise config is visible"
+    else
+      echo "fail repo mise config is not visible to mise"
+      failures=$((failures + 1))
+    fi
+    if grep -Ev "^$repo_root/mise.toml$|^$home_path/|^$repo_root/" <<<"$config_paths" | grep -q .; then
+      echo "fail mise is loading config outside this verification environment:"
+      grep -Ev "^$repo_root/mise.toml$|^$home_path/|^$repo_root/" <<<"$config_paths"
+      failures=$((failures + 1))
+    else
+      echo "ok   no external mise config paths detected"
+    fi
+  else
+    echo "fail mise is not installed"
+    failures=$((failures + 1))
+  fi
+
+  if [[ "$failures" -gt 0 ]]; then
+    echo
+    echo "Bootstrap verification preflight failed: $failures issue(s)"
+    return 1
+  fi
+
+  echo
+  echo "Bootstrap verification preflight: ok"
+}
+
+run_bootstrap_gate() {
+  local command="$1"
+
+  printf '\nRunning: %s\n' "$command"
+  case "$command" in
+    'mise run ai:validate')
+      (cd "$repo_root" && mise run ai:validate)
+      ;;
+    'mise run ai:doctor')
+      (cd "$repo_root" && mise run ai:doctor)
+      ;;
+    'mise run ai:completion:audit')
+      (cd "$repo_root" && mise run ai:completion:audit)
+      ;;
+    'mise run migration:go-task:retire-check')
+      (cd "$repo_root" && mise run migration:go-task:retire-check)
+      ;;
+    'mise run ai:reset:dry-run')
+      (cd "$repo_root" && mise run ai:reset:dry-run)
+      ;;
+    'mise run reset:dry-run')
+      (cd "$repo_root" && mise run reset:dry-run)
+      ;;
+    *)
+      echo "unknown bootstrap verification gate: $command" >&2
+      return 2
+      ;;
+  esac
+}
+
+bootstrap_verify() {
+  local environment verified_by output
+  local marker marker_commit current_commit marker_source date platform arch
+  local failed_command command
+  local commands=(
+    'mise run ai:validate'
+    'mise run ai:doctor'
+    'mise run ai:completion:audit'
+    'mise run migration:go-task:retire-check'
+    'mise run ai:reset:dry-run'
+    'mise run reset:dry-run'
+  )
+
+  parse_bootstrap_verification_options "$@" || return $?
+  bootstrap_verify_preflight --environment "$environment" --verified-by "$verified_by" || return $?
 
   marker="$(bootstrap_marker_path)"
   if [[ ! -f "$marker" ]]; then
@@ -595,6 +671,7 @@ completion_audit() {
   audit_mise_task "install" "mise install orchestration task exists" || missing=$((missing + 1))
   audit_mise_task "bootstrap:preflight" "bootstrap preflight task exists" || missing=$((missing + 1))
   audit_mise_task "ai:bootstrap:verify" "bootstrap verification recorder exists" || missing=$((missing + 1))
+  audit_mise_task "ai:bootstrap:verify:preflight" "bootstrap verification preflight exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:retire-check" "go-task retirement check exists" || missing=$((missing + 1))
   audit_mise_task "migration:go-task:archive-compat" "go-task compatibility archive task exists" || missing=$((missing + 1))
 
@@ -615,7 +692,7 @@ completion_audit() {
   if [[ -n "$verification_record" ]]; then
     audit_ok "Fresh-machine bootstrap verification is recorded" "${verification_record#$repo_root/}"
   else
-    audit_open "Fresh-machine bootstrap verification is not recorded" "After testing on a fresh machine, VM, or clean user, run AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify."
+    audit_open "Fresh-machine bootstrap verification is not recorded" "On a fresh machine, VM, or clean user, run AI_BOOTSTRAP_VERIFY_ENVIRONMENT=<matching-environment> mise run ai:bootstrap:verify:preflight, then mise run ai:bootstrap:verify."
     open=$((open + 1))
   fi
 
@@ -1714,6 +1791,10 @@ case "${1:-}" in
   bootstrap-verify)
     shift
     bootstrap_verify "$@"
+    ;;
+  bootstrap-verify-preflight)
+    shift
+    bootstrap_verify_preflight "$@"
     ;;
   inventory)
     inventory

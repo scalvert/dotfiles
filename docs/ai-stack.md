@@ -153,6 +153,7 @@ Use `mise run ai:completion:audit` to inspect goal coverage. Use `mise run ai:co
 Record real fresh-machine bootstrap evidence after testing:
 
 ```bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify:preflight
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 ```
 

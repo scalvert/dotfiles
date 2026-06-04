@@ -26,6 +26,7 @@ Preferred workflow:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/scalvert/dotfiles/main/install | bash
 cd ~/workspace/personal/dotfiles
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify:preflight
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 ```
 
@@ -38,7 +39,8 @@ gate succeeds.
 Do not treat a temporary `HOME` under an existing login session as a clean-user
 verification. Homebrew, macOS preferences, and other system-level tools are not
 fully isolated by changing `HOME`; use a real disposable VM, fresh machine, or
-separate OS user account.
+separate OS user account. The preflight rejects the obvious unsafe case, but it
+does not replace judgment about whether the machine is truly isolated.
 
 Manual fallback: copy `TEMPLATE.md` to a dated file after a real verification
 run. The completion audit only treats a non-template file as proof when it

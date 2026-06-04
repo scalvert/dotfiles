@@ -70,6 +70,7 @@ Fresh-machine bootstrap verification records live in
 `bootstrap-verifications/`. After a real test run, generate a sanitized record:
 
 ```bash
+AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify:preflight
 AI_BOOTSTRAP_VERIFY_ENVIRONMENT=fresh-machine mise run ai:bootstrap:verify
 ```
 

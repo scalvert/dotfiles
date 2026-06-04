@@ -113,6 +113,10 @@ run = "./scripts/ai-stack completion-audit --strict"
 description = "Run bootstrap verification gates and write a sanitized pass record"
 run = "./scripts/ai-stack bootstrap-verify"
 
+[tasks."ai:bootstrap:verify:preflight"]
+description = "Check whether the current machine/user is suitable for bootstrap verification"
+run = "./scripts/ai-stack bootstrap-verify-preflight"
+
 [tasks."ai:inventory"]
 description = "Show personal AI stack inventory"
 run = "./scripts/ai-stack inventory"
