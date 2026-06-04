@@ -63,6 +63,31 @@ install_xcode_cli() {
 }
 
 # Install Homebrew
+ensure_sudo_access_for_homebrew() {
+  if [[ "$PLATFORM" != "darwin" ]]; then
+    return 0
+  fi
+
+  if sudo -n -v &>/dev/null; then
+    success "sudo access already cached"
+    return 0
+  fi
+
+  if [[ ! -r /dev/tty ]]; then
+    error "Homebrew needs sudo access, but no terminal is available for a password prompt"
+    echo "Run 'sudo -v' in a terminal, then rerun the bootstrap command."
+    exit 1
+  fi
+
+  info "Homebrew needs administrator access. Prompting for sudo password..."
+  if sudo -v </dev/tty; then
+    success "sudo access cached"
+  else
+    error "Could not get sudo access for Homebrew installation"
+    exit 1
+  fi
+}
+
 install_homebrew() {
   if command -v brew &>/dev/null; then
     success "Homebrew already installed"
@@ -71,6 +96,7 @@ install_homebrew() {
 
   if [[ "$PLATFORM" == "darwin" ]] || [[ "$PLATFORM" == "linux" ]]; then
     info "Installing Homebrew..."
+    ensure_sudo_access_for_homebrew
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Add Homebrew to PATH for this session

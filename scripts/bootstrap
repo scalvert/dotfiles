@@ -78,6 +78,31 @@ homebrew_shellenv() {
   fi
 }
 
+ensure_sudo_access_for_homebrew() {
+  if [[ "$(platform)" != "darwin" ]]; then
+    return 0
+  fi
+
+  if sudo -n -v >/dev/null 2>&1; then
+    ok "sudo access already cached"
+    return 0
+  fi
+
+  if [[ ! -r /dev/tty ]]; then
+    err "Homebrew needs sudo access, but no terminal is available for a password prompt"
+    echo "Run 'sudo -v' in a terminal, then rerun the bootstrap command."
+    exit 1
+  fi
+
+  info "Homebrew needs administrator access. Prompting for sudo password..."
+  if sudo -v </dev/tty; then
+    ok "sudo access cached"
+  else
+    err "Could not get sudo access for Homebrew installation"
+    exit 1
+  fi
+}
+
 install_homebrew() {
   if command -v brew >/dev/null 2>&1; then
     ok "Homebrew already installed"
@@ -90,6 +115,7 @@ install_homebrew() {
   fi
 
   info "Installing Homebrew..."
+  ensure_sudo_access_for_homebrew
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   eval "$(homebrew_shellenv)"
   ok "Homebrew installed"

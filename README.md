@@ -31,6 +31,10 @@ xcrun --find git
 
 After `xcrun --find git` succeeds, rerun the one-liner.
 
+The Homebrew installer runs non-interactively when invoked through `curl |
+bash`, so this bootstrap prompts for sudo first and caches admin access before
+starting Homebrew.
+
 ### Local Install
 
 ```sh
