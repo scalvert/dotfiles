@@ -13,6 +13,7 @@ run = [
   "mise run binutils:install",
   "mise run dotfiles:install",
   "mise run ai:install",
+  "mise run wiki:install",
   "mise run nvim:restore",
 ]
 
@@ -96,6 +97,10 @@ depends = ["ai:validate"]
 [tasks."ai:validate"]
 description = "Validate personal AI stack configuration"
 run = "./scripts/ai-stack validate"
+
+[tasks."wiki:install"]
+description = "Clone the private personal wiki (scalvert/wiki) if absent"
+run = "./scripts/wiki install"
 
 [tasks."ai:doctor"]
 description = "Run AI stack architecture and generated-artifact checks"
