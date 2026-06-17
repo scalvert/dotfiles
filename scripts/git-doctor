@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Reports git-config drift and identity problems that a fresh-machine install
+# would silently inherit. Runs all checks (no set -e); exits non-zero on WARN.
+set -uo pipefail
+
+D="${DOTFILES_DIR:-$HOME/workspace/personal/dotfiles}"
+fail=0
+warn() { echo "git:doctor WARN  $*" >&2; fail=1; }
+ok()   { echo "git:doctor ok    $*"; }
+
+# 1. .gitconfig.local must not still be the upstream (rwjblue) placeholder.
+if grep -qE 'Robert Jackson|your\.work\.email@here\.com' "$HOME/.gitconfig.local" 2>/dev/null; then
+  warn ".gitconfig.local still holds the upstream placeholder identity — set your work name/email there"
+else
+  ok ".gitconfig.local identity is customized"
+fi
+
+# 2. The personal identity split must resolve under ~/workspace/personal.
+personal_email=$(git -C "$D" config user.email 2>/dev/null || true)
+if [ "$personal_email" = "steve.calvert@gmail.com" ]; then
+  ok "personal identity active under ~/workspace/personal ($personal_email)"
+else
+  warn "personal identity not resolving under ~/workspace/personal (got '${personal_email:-unset}') — check the includeIf and ~/.gitconfig-personal"
+fi
+
+# 3. Live ~/.gitconfig drift vs the repo (informational — capture or ignore intentionally).
+if [ -f "$HOME/.gitconfig" ] && [ -f "$D/packages/git/gitconfig" ]; then
+  drift=$(comm -23 <(sort -u "$HOME/.gitconfig") <(sort -u "$D/packages/git/gitconfig") | grep -vE '^[[:space:]]*$|^[[:space:]]*#|^\[' | sed 's/^[[:space:]]*/    /')
+  if [ -n "$drift" ]; then
+    echo "git:doctor INFO  ~/.gitconfig has settings not tracked in the repo:"
+    echo "$drift"
+  else
+    ok "~/.gitconfig matches the repo"
+  fi
+fi
+
+exit "$fail"

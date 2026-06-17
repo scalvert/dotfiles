@@ -1,0 +1,7 @@
+# vim: set filetype=gitconfig
+# Personal identity. Applied under ~/workspace/personal/ via the includeIf in
+# .gitconfig, so repos there are authored as personal (gmail) while the default
+# (work) identity applies everywhere else. Gmail is already public via commits.
+[user]
+	name = Steve Calvert
+	email = steve.calvert@gmail.com

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The portable personal stack: private/personal repos cloned onto every machine
+# alongside the (public) dotfiles repo. This list is the composition manifest —
+# the single place that declares what "my stack" is. dotfiles orchestrates;
+# each repo keeps its own visibility and lifecycle (compose, not merge).
+#
+# Format per entry: "<owner/repo> <absolute-path>"
+STACK_REPOS=(
+  "scalvert/wiki   $HOME/workspace/personal/wiki"
+  "scalvert/skills $HOME/workspace/personal/skills"
+)
+
+# Personal gh identity store (see fish conf.d/30-integrations.fish). The install
+# flow runs outside the PWD-based switch, so point gh at it explicitly.
+export GH_CONFIG_DIR="${GH_CONFIG_DIR:-$HOME/.config/gh-scalvert}"
+
+usage() {
+  echo "usage: scripts/stack <install>" >&2
+}
+
+install() {
+  local authed=1
+  gh auth status >/dev/null 2>&1 || authed=0
+
+  for entry in "${STACK_REPOS[@]}"; do
+    # shellcheck disable=SC2086  # intentional word-split of "repo path"
+    set -- $entry
+    local repo="$1" path="$2"
+    if [ -d "$path/.git" ]; then
+      echo "stack: $repo already present at $path"
+      continue
+    fi
+    # ponytail: skip (not fail) when the personal identity isn't authed yet — on
+    # a fresh machine gh-personal login happens after this; rerun the task after.
+    if [ "$authed" -eq 0 ]; then
+      echo "stack: skip $repo — personal GitHub identity not authed (GH_CONFIG_DIR=$GH_CONFIG_DIR)" >&2
+      continue
+    fi
+    mkdir -p "$(dirname "$path")"
+    gh repo clone "$repo" "$path" && echo "stack: cloned $repo -> $path"
+  done
+
+  if [ "$authed" -eq 0 ]; then
+    echo "stack: run 'gh-personal; gh auth login', then re-run 'mise run stack:install'" >&2
+  fi
+}
+
+case "${1:-install}" in
+  install) install ;;
+  *) usage; exit 1 ;;
+esac
