@@ -1,5 +1,3 @@
-local prompt_library = require("rwjblue.codecompanion.prompts")
-
 return {
   {
     "olimorris/codecompanion.nvim",
@@ -58,10 +56,6 @@ return {
               },
             })
           end,
-
-          copilot = {
-            model = "claude-3.7-sonnet",
-          },
         },
 
         -- Strategy configurations
@@ -99,16 +93,16 @@ return {
             },
 
             tools = {
-              mcp = {
-                description = "Call tools and resources from the MCP Servers",
-                callback = function()
-                  return require("mcphub.extensions.codecompanion")
-                end,
-              },
+              -- mcp = {
+              --   description = "Call tools and resources from the MCP Servers",
+              --   callback = function()
+              --     return require("mcphub.extensions.codecompanion")
+              --   end,
+              -- },
             },
           },
-          inline = { adapter = "anthropic" },
-          agent = { adapter = "anthropic" },
+          inline = { adapter = "copilot" },
+          agent = { adapter = "copilot" },
         },
 
         -- Display configurations
@@ -122,8 +116,6 @@ return {
             -- }
           },
         },
-
-        prompt_library = prompt_library,
       }
     end,
   },
