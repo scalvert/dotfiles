@@ -25,9 +25,6 @@ includes:
   nvim:
     taskfile: ./taskfiles/nvim.yml
 
-  secrets:
-    taskfile: ./taskfiles/secrets.yml
-
   shell:
     taskfile: ./taskfiles/shell.yml
 

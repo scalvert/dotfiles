@@ -1,0 +1,11 @@
+# SSH client config (managed by dotfiles).
+# Machine-specific entries (colima, work hosts, etc.) go in ~/.ssh/config.local
+# (missing includes are ignored, so this is safe on a fresh machine).
+Include ~/.colima/ssh_config
+Include ~/.ssh/config.local
+
+# Use the 1Password SSH agent for all hosts. Private keys are served by
+# 1Password and never stored on disk. Requires 1Password with the SSH agent
+# enabled (Settings → Developer → Use the SSH agent).
+Host *
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"

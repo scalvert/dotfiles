@@ -102,6 +102,19 @@
   # https://git-scm.com/docs/git-config#Documentation/git-config.txt-maintenancestrategy
   strategy = incremental
 
+# Commit signing via SSH key served by 1Password (op-ssh-sign). The signing key
+# is 1Password-backed, so this works on any machine signed into 1Password — no
+# private key on disk. Public key + program path are not secrets.
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+	allowedSignersFile = ~/.config/git/allowed_signers
+[commit]
+	gpgsign = true
+[user]
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIINDbRnViIXxRnc8FGpihBN1yNfzNW67fzQU+fd26oZ
+
 [include]
 	path = ./.gitconfig.local
 

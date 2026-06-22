@@ -41,6 +41,10 @@ depends = ["brew:install", "mise:install", "mise:update"]
 description = "Install Homebrew and tools defined in Brewfile"
 run = "./scripts/bootstrap install-homebrew && brew bundle"
 
+[tasks."brew:work"]
+description = "Install work-machine apps from Brewfile.work (run only on work machines)"
+run = "brew bundle --file=Brewfile.work"
+
 [tasks."brew:update"]
 description = "Update Brewfile with current brew packages"
 run = "brew bundle dump --force --describe"
@@ -77,18 +81,6 @@ run = "./scripts/nvim restore"
 [tasks."nvim:update"]
 description = "Update Neovim plugins and commit lazy-lock.json if changed"
 run = "./scripts/nvim update"
-
-[tasks."secrets:export"]
-description = "Export secrets to an encrypted GPG tarball"
-run = "./scripts/secrets export"
-
-[tasks."secrets:import"]
-description = "Import secrets from an encrypted GPG tarball"
-run = "./scripts/secrets import"
-
-[tasks."secrets:list"]
-description = "List files that would be exported"
-run = "./scripts/secrets list"
 
 [tasks."ai:install"]
 description = "Install personal AI stack links and validate configuration"

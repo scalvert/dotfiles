@@ -102,6 +102,8 @@ brew "zsh"
 brew "jesseduffield/lazygit/lazygit"
 # Simple command line calendar, written in Rust
 brew "rwjblue/tap/cal"
+# Mac App Store command-line interface
+brew "mas"
 # Command-line interface for 1Password
 cask "1password-cli"
 # Application launcher and productivity software
@@ -136,6 +138,16 @@ cask "wezterm"
 cask "windsurf"
 # Multiplayer code editor
 cask "zed"
+# AI-first code editor
+cask "cursor"
+# OpenAI Codex
+cask "codex"
+# Prevents the Mac from sleeping
+cask "keepingyouawake"
+# Screenshot and screen-recording tool
+cask "cleanshot"
+# Clipboard manager (Mac App Store)
+mas "Paste", id: 967805235
 vscode "charliermarsh.ruff"
 vscode "davidanson.vscode-markdownlint"
 vscode "dbaeumer.vscode-eslint"

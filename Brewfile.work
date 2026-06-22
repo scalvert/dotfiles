@@ -1,0 +1,24 @@
+# Work-only apps. Install on work machines with: mise run brew:work
+# The base Brewfile covers everything common to all machines; this layers the
+# Glean/work development tools on top. Personal machines skip this file.
+
+# GPG Suite (GPG tooling / Keychain integration)
+cask "gpg-suite"
+# Microsoft .NET SDK
+cask "dotnet-sdk"
+# In-memory data store — server + tools
+cask "redis-stack"
+cask "redis-stack-server"
+cask "redis-stack-redisinsight"
+# OpenAPI diff / changelog tooling
+cask "openapi-changes"
+# .NET assembly browser and decompiler
+cask "ilspy"
+# AWS Session Manager plugin for the AWS CLI
+cask "session-manager-plugin"
+# Secure tunnels to localhost
+cask "ngrok"
+# Native macOS HTTP debugging proxy
+cask "proxyman"
+# Work 2FA (Mac App Store) — requires `brew "mas"` from the base Brewfile
+mas "Okta Verify", id: 490179405
