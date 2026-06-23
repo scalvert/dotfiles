@@ -64,8 +64,6 @@ brew "hyperfine"
 brew "libtool"
 # Tools and libraries to manipulate images in many formats
 brew "imagemagick"
-# Git-compatible distributed version control system
-brew "jj"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # YAML Parser
@@ -92,8 +90,6 @@ brew "tokei"
 brew "watchexec"
 # Watch files and take action when they change
 brew "watchman"
-# Pluggable terminal workspace, with terminal multiplexer as the base feature
-brew "zellij"
 # Shell extension to navigate your filesystem faster
 brew "zoxide"
 # UNIX shell (command interpreter)
@@ -116,14 +112,10 @@ cask "discord"
 cask "ghostty"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "google-cloud-sdk"
-# Desktop automation application
-cask "hammerspoon"
 # System monitoring app
 cask "istat-menus"
 # Terminal emulator as alternative to Apple's Terminal app
 cask "iterm2"
-# Noise cancelling application
-cask "krisp"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Get up and running with large language models locally
@@ -132,12 +124,8 @@ cask "ollama"
 cask "orion"
 # Open-source code editor
 cask "visual-studio-code"
-# GPU-accelerated cross-platform terminal emulator and multiplexer
-cask "wezterm"
 # Agentic IDE powered by AI Flow paradigm
 cask "windsurf"
-# Multiplayer code editor
-cask "zed"
 # AI-first code editor
 cask "cursor"
 # OpenAI Codex

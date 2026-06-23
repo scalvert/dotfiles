@@ -4,8 +4,6 @@
 
 # GPG Suite (GPG tooling / Keychain integration)
 cask "gpg-suite"
-# Microsoft .NET SDK
-cask "dotnet-sdk"
 # In-memory data store — server + tools
 cask "redis-stack"
 cask "redis-stack-server"
