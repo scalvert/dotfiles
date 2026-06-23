@@ -1,48 +1,44 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
+
+# Install/update mise-managed tools. Robust across mise versions: a fresh
+# `brew install mise` on a new machine may be newer than the mise this config
+# was built against, and subcommand names drift. We run each candidate and fall
+# back only when mise reports the command itself is unknown — any other failure
+# is a real error and surfaces immediately. Critically, this never aborts the
+# bootstrap on a renamed subcommand (the old --help probe did).
 
 usage() {
   echo "usage: scripts/mise-tools <install|update|outdated>" >&2
 }
 
-mise_supports() {
-  mise "$1" --help >/dev/null 2>&1
-}
-
 run_first_supported() {
-  local command_name="$1"
-  shift
-
-  local command
-  for command in "$@"; do
-    if mise_supports "$command"; then
-      mise "$command"
+  local label="$1"; shift
+  local cmd errfile status
+  errfile="$(mktemp)"
+  for cmd in "$@"; do
+    if mise "$cmd" 2>"$errfile"; then
+      rm -f "$errfile"
       return 0
     fi
+    status=$?
+    # Unknown/renamed subcommand on this mise version -> try the next variant.
+    if grep -qiE 'unknown command|unrecognized subcommand|unexpected argument|invalid subcommand' "$errfile"; then
+      continue
+    fi
+    # Any other failure is real (network, tool build, etc.) -> surface and stop.
+    cat "$errfile" >&2
+    rm -f "$errfile"
+    return "$status"
   done
-
-  echo "mise does not support any $command_name command variant: $*" >&2
-  echo "mise version: $(mise --version 2>/dev/null || printf 'unknown')" >&2
+  echo "mise-tools: no supported '$label' command (tried: $*); mise $(mise --version 2>/dev/null || echo '?')" >&2
+  rm -f "$errfile"
   return 1
 }
 
 case "${1:-}" in
-  install)
-    run_first_supported "tool install" install upgrade up
-    ;;
-  update)
-    run_first_supported "tool update" upgrade up install
-    ;;
-  outdated)
-    if mise_supports outdated; then
-      mise outdated -l
-    else
-      echo "mise outdated is not supported by this mise version"
-      mise --version
-    fi
-    ;;
-  *)
-    usage
-    exit 2
-    ;;
+  install)  run_first_supported install install up upgrade ;;
+  update)   run_first_supported update upgrade up install ;;
+  outdated) mise outdated -l 2>/dev/null || mise outdated 2>/dev/null || mise --version ;;
+  *)        usage; exit 2 ;;
 esac
