@@ -139,7 +139,7 @@ clone_dotfiles() {
   else
     info "Cloning dotfiles to $DOTFILES_DIR..."
     mkdir -p "$(dirname "$DOTFILES_DIR")"
-    git clone https://github.com/scalvert/dotfiles.git "$DOTFILES_DIR"
+    git clone --branch main https://github.com/scalvert/dotfiles.git "$DOTFILES_DIR"
     cd "$DOTFILES_DIR"
     success "Dotfiles cloned"
   fi
