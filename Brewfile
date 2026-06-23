@@ -1,5 +1,4 @@
 tap "jesseduffield/lazygit"
-tap "rwjblue/tap"
 # Record and share terminal sessions
 brew "asciinema"
 # Code searching, linting, rewriting
@@ -96,8 +95,6 @@ brew "zoxide"
 brew "zsh"
 # A simple terminal UI for git commands, written in Go
 brew "jesseduffield/lazygit/lazygit"
-# Simple command line calendar, written in Rust
-brew "rwjblue/tap/cal"
 # Mac App Store command-line interface
 brew "mas"
 # Command-line interface for 1Password

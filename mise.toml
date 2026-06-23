@@ -39,7 +39,7 @@ depends = ["brew:install", "mise:install", "mise:update"]
 
 [tasks."brew:install"]
 description = "Install Homebrew and tools defined in Brewfile"
-run = "./scripts/bootstrap install-homebrew && brew bundle"
+run = "./scripts/bootstrap install-homebrew && { brew bundle || echo '⚠️  brew bundle: some formulae/casks failed — continuing so shell + config still get set up'; }"
 
 [tasks."brew:work"]
 description = "Install work-machine apps from Brewfile.work (run only on work machines)"
