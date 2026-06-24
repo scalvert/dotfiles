@@ -131,8 +131,6 @@ cask "codex"
 cask "keepingyouawake"
 # Screenshot and screen-recording tool
 cask "cleanshot"
-# Clipboard manager (Mac App Store)
-mas "Paste", id: 967805235
 vscode "charliermarsh.ruff"
 vscode "davidanson.vscode-markdownlint"
 vscode "dbaeumer.vscode-eslint"
