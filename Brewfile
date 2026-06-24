@@ -69,8 +69,8 @@ brew "jq"
 brew "libyaml"
 # Polyglot runtime manager (asdf rust clone)
 brew "mise"
-# Rust toolchain (cargo) — required to build the binutils package during bootstrap
-brew "rust"
+# Rust toolchain manager — binutils pins a toolchain via rust-toolchain.toml (needs rustup, not standalone rust)
+brew "rustup"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
 # Search tool like grep and The Silver Searcher

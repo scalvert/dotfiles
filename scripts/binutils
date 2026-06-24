@@ -5,6 +5,17 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 shared_binutils_path="${SHARED_BINUTILS_PATH:-$repo_root/../../malleatus/shared_binutils}"
 local_binutils_path="$repo_root/local-packages/binutils"
 
+# binutils + shared_binutils pin a toolchain via rust-toolchain.toml, which
+# requires rustup (brew "rustup"). Ensure rustup's bin is on PATH and a stable
+# toolchain is installed before any cargo build, so a fresh machine doesn't hit
+# "rustup: command not found" or "no default toolchain".
+ensure_rust() {
+  export PATH="$HOME/.cargo/bin:$PATH"
+  if command -v rustup >/dev/null 2>&1; then
+    rustup show active-toolchain >/dev/null 2>&1 || rustup toolchain install stable
+  fi
+}
+
 clone_shared() {
   if [[ -d "$shared_binutils_path/.git" ]]; then
     return 0
@@ -49,6 +60,7 @@ cache_shell_startup() {
 }
 
 install() {
+  ensure_rust
   clone_shared
   build_shared
   build_repo_binutils
