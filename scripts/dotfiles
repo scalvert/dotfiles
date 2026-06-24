@@ -73,7 +73,6 @@ packages/vscode/snippets|$HOME/Library/Application Support/Code/User/snippets
 packages/tealdeer/config.toml|$HOME/Library/Application Support/tealdeer/config.toml
 packages/jj/|$HOME/Library/Application Support/jj
 packages/alfred/snippets|$HOME/Library/Application Support/Alfred/Alfred.alfredpreferences/snippets
-packages/iterm2/|$HOME/.config/iterm2
 EOF
   fi
 
@@ -173,17 +172,22 @@ link_macos_dotfiles() {
     "packages/tealdeer/config.toml|$HOME/Library/Application Support/tealdeer/config.toml"
     "packages/jj/|$HOME/Library/Application Support/jj"
     "packages/alfred/snippets|$HOME/Library/Application Support/Alfred/Alfred.alfredpreferences/snippets"
-    "packages/iterm2/|$HOME/.config/iterm2"
   )
 
   for entry in "${entries[@]}"; do
     link_dotfile "${entry%%|*}" "${entry#*|}"
   done
 
+  # iTerm reads prefs from a custom folder and rewrites them on quit, so it must
+  # own a REAL plist — a symlink into the repo is reported as "missing or
+  # malformed file". Place real copies, then point iTerm at the folder.
+  mkdir -p "$HOME/.config/iterm2"
+  cp -f "$repo_root/packages/iterm2/com.googlecode.iterm2.plist" "$HOME/.config/iterm2/com.googlecode.iterm2.plist"
+  cp -f "$repo_root/packages/iterm2/Profiles.json" "$HOME/.config/iterm2/Profiles.json"
   if command -v defaults >/dev/null 2>&1; then
     defaults write com.googlecode.iterm2 PrefsCustomFolder -string "$HOME/.config/iterm2"
     defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
-    echo "iTerm2 configured to load preferences from ~/.config/iterm2"
+    echo "iTerm2 configured to load preferences from ~/.config/iterm2 (restart iTerm to apply)"
   fi
 }
 
