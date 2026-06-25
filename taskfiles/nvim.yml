@@ -21,9 +21,8 @@ tasks:
           +'Lazy! restore' \
           +'Lazy! clean' \
           +'Lazy! clear' \
-          +'TSUpdateSync' \
-          +'autocmd User MasonUpdateAllCompleted qall!' \
-          +'MasonUpdateAll' \
+          +'silent! TSUpdateSync' \
+          +'lua if vim.fn.exists(":MasonUpdateAll")==2 then vim.cmd("autocmd User MasonUpdateAllCompleted qall!") vim.cmd("MasonUpdateAll") else vim.cmd("qall!") end'
 
   update:
     desc: Updates Neovim plugins, CLI utils, and TreeSitter plugins
@@ -38,8 +37,7 @@ tasks:
           +'Lazy! sync' \
           +'Lazy! clean' \
           +'Lazy! clear' \
-          +'TSUpdateSync' \
-          +'autocmd User MasonUpdateAllCompleted qall!' \
-          +'MasonUpdateAll' \
+          +'silent! TSUpdateSync' \
+          +'lua if vim.fn.exists(":MasonUpdateAll")==2 then vim.cmd("autocmd User MasonUpdateAllCompleted qall!") vim.cmd("MasonUpdateAll") else vim.cmd("qall!") end'
 
       - task: commit

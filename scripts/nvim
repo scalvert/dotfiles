@@ -15,9 +15,8 @@ restore() {
     +'Lazy! restore' \
     +'Lazy! clean' \
     +'Lazy! clear' \
-    +'TSUpdateSync' \
-    +'autocmd User MasonUpdateAllCompleted qall!' \
-    +'MasonUpdateAll'
+    +'silent! TSUpdateSync' \
+    +'lua if vim.fn.exists(":MasonUpdateAll")==2 then vim.cmd("autocmd User MasonUpdateAllCompleted qall!") vim.cmd("MasonUpdateAll") else vim.cmd("qall!") end'
 }
 
 update() {
@@ -26,9 +25,8 @@ update() {
     +'Lazy! sync' \
     +'Lazy! clean' \
     +'Lazy! clear' \
-    +'TSUpdateSync' \
-    +'autocmd User MasonUpdateAllCompleted qall!' \
-    +'MasonUpdateAll'
+    +'silent! TSUpdateSync' \
+    +'lua if vim.fn.exists(":MasonUpdateAll")==2 then vim.cmd("autocmd User MasonUpdateAllCompleted qall!") vim.cmd("MasonUpdateAll") else vim.cmd("qall!") end'
 
   commit_lockfile
 }
