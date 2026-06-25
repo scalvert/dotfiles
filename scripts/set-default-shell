@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# Make fish the login shell. Uses sudo (cached earlier in the bootstrap) so it
+# doesn't prompt for the user password the way a plain `chsh` does. Idempotent.
+
+fish_path="$(command -v fish 2>/dev/null || true)"
+if [ -z "$fish_path" ] && [ -x /opt/homebrew/bin/fish ]; then
+  fish_path=/opt/homebrew/bin/fish
+fi
+if [ -z "$fish_path" ] || [ ! -x "$fish_path" ]; then
+  echo "set-default-shell: fish not found; skipping" >&2
+  exit 0
+fi
+
+# Register fish as a valid login shell.
+if ! grep -qxF "$fish_path" /etc/shells 2>/dev/null; then
+  echo "$fish_path" | sudo tee -a /etc/shells >/dev/null
+fi
+
+current="$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')"
+if [ "$current" = "$fish_path" ]; then
+  echo "set-default-shell: login shell already fish ($fish_path)"
+else
+  sudo chsh -s "$fish_path" "$USER" \
+    && echo "set-default-shell: login shell set to $fish_path — open a new terminal"
+fi

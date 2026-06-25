@@ -10,12 +10,17 @@ run = "mise tasks ls --local"
 description = "Complete system setup"
 run = [
   "mise run system:install",
+  "mise run shell:set-default",
   "mise run binutils:install",
   "mise run dotfiles:install",
   "mise run ai:install",
   "mise run stack:install",
   "mise run nvim:restore",
 ]
+
+[tasks."shell:set-default"]
+description = "Make fish the login shell (chsh, sudo-cached so no extra password prompt)"
+run = "./scripts/set-default-shell"
 
 [tasks."reset:dry-run"]
 description = "Preview removing managed dotfile symlinks"
