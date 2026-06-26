@@ -114,6 +114,8 @@ cask "google-cloud-sdk"
 cask "istat-menus"
 # Terminal emulator as alternative to Apple's Terminal app
 cask "iterm2"
+# Terminal font the iTerm profile uses (FiraCode Nerd Font); without it iTerm falls back to a default
+cask "font-fira-code-nerd-font"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Get up and running with large language models locally
