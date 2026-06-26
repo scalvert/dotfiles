@@ -8,15 +8,7 @@ run = "mise tasks ls --local"
 
 [tasks.install]
 description = "Complete system setup"
-run = [
-  "mise run system:install",
-  "mise run shell:set-default",
-  "mise run binutils:install",
-  "mise run dotfiles:install",
-  "mise run ai:install",
-  "mise run stack:install",
-  "mise run nvim:restore",
-]
+run = "./scripts/install-all"
 
 [tasks."shell:set-default"]
 description = "Make fish the login shell (chsh, sudo-cached so no extra password prompt)"

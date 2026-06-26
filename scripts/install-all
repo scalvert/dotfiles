@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Run every install phase, collecting failures instead of aborting on the first.
+# A single run then either completes or prints the full list of what failed, so
+# the install is debuggable in one pass — not one-failure-per-rerun.
+set -uo pipefail
+
+phases=(
+  system:install
+  shell:set-default
+  binutils:install
+  dotfiles:install
+  ai:install
+  stack:install
+  nvim:restore
+)
+
+failed=()
+for phase in "${phases[@]}"; do
+  printf '\n==> %s\n' "$phase"
+  if mise run "$phase"; then
+    printf '    ok   %s\n' "$phase"
+  else
+    printf '    FAIL %s (continuing)\n' "$phase"
+    failed+=("$phase")
+  fi
+done
+
+printf '\n================ install summary ================\n'
+if [ ${#failed[@]} -eq 0 ]; then
+  printf 'All phases completed.\n'
+else
+  printf '%d phase(s) failed:\n' "${#failed[@]}"
+  printf '  - %s\n' "${failed[@]}"
+  printf '\nFix, then re-run one phase with: mise run <phase>   (re-running the whole install is safe/idempotent)\n'
+fi
+# Always exit 0 so the bootstrap finishes and shows this summary instead of
+# aborting; the summary above is the report of what still needs attention.
+exit 0

@@ -34,7 +34,10 @@ link_dotfile() {
       echo "$dest already exists and is symlinked to $current"
     fi
   elif [[ -e "$dest" ]]; then
-    echo "$dest already exists and is not a symlink"
+    echo "$dest exists as a real file/dir (likely created by an app); backing up to ${dest}.bak and linking to the repo"
+    rm -rf "${dest}.bak"
+    mv "$dest" "${dest}.bak"
+    ln -s "$src" "$dest"
   else
     echo "creating link for $dest"
     ln -s "$src" "$dest"

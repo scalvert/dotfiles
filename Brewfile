@@ -1,4 +1,3 @@
-tap "jesseduffield/lazygit"
 # Record and share terminal sessions
 brew "asciinema"
 # Code searching, linting, rewriting
@@ -96,7 +95,7 @@ brew "zoxide"
 # UNIX shell (command interpreter)
 brew "zsh"
 # A simple terminal UI for git commands, written in Go
-brew "jesseduffield/lazygit/lazygit"
+brew "lazygit"
 # Mac App Store command-line interface
 brew "mas"
 # Command-line interface for 1Password
