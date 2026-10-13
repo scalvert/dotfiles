@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ai_dir="$repo_root/packages/ai"
 
 usage() {
-  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|bootstrap-verify-preflight|bootstrap-verification-plan|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
+  echo "usage: scripts/ai-stack <validate|doctor|completion-audit|bootstrap-verify|bootstrap-verify-preflight|bootstrap-verification-plan|inventory|live-inventory|review|report|snapshot-skills|skill-drift|feedback|usage|usage-report|prompt-plan|archive-plan|generate-commands|diff-commands|install-commands|generate-instructions|diff-instructions|install-instructions|reset-commands|reset|generate-mcp|diff-mcp|sync-mcp> [--apply|--strict]"
 }
 
 validate() {
@@ -1550,6 +1550,130 @@ legacy_command_manifest_path() {
   echo "$HOME/.config/ai/state/command-install-manifest.tsv"
 }
 
+instruction_source() {
+  echo "$ai_dir/instructions/global.md"
+}
+
+# client, file name, live path
+instruction_targets() {
+  printf '%s\t%s\t%s\n' claude CLAUDE.md "$HOME/.claude/CLAUDE.md"
+  printf '%s\t%s\t%s\n' codex AGENTS.md "$HOME/.codex/AGENTS.md"
+  printf '%s\t%s\t%s\n' glean AGENTS.md "$HOME/.glean/agent/AGENTS.md"
+}
+
+render_instructions() {
+  printf '%s\n\n' "<!-- Generated from packages/ai/instructions/global.md by scripts/ai-stack generate-instructions. Edit the source, not this file. -->"
+  cat "$(instruction_source)"
+}
+
+generate_instructions() {
+  local source
+  source="$(instruction_source)"
+  if [[ ! -f "$source" ]]; then
+    echo "missing $source" >&2
+    exit 1
+  fi
+
+  instruction_targets | while IFS=$'\t' read -r client file _live; do
+    local out="$ai_dir/generated/instructions/$client/$file"
+    mkdir -p "$(dirname "$out")"
+    render_instructions > "$out"
+    echo "generated: ${out#"$repo_root"/}"
+  done
+}
+
+# Compares the source, the generated files and the live files. With --check,
+# exits 1 when any of them differ, so it can serve as a drift check.
+diff_instructions() {
+  local check="no"
+  if [[ "${1:-}" == "--check" ]]; then
+    check="yes"
+  fi
+
+  local expected drift=0
+  expected="$(mktemp)"
+  render_instructions > "$expected"
+
+  while IFS=$'\t' read -r client file live; do
+    local generated="$ai_dir/generated/instructions/$client/$file"
+    echo "$client: $live"
+
+    if [[ ! -f "$generated" ]] || ! cmp -s "$expected" "$generated"; then
+      echo "  stale generated file; run scripts/ai-stack generate-instructions"
+      drift=1
+    fi
+
+    if [[ ! -f "$live" ]]; then
+      echo "  missing live file"
+      drift=1
+    elif cmp -s "$expected" "$live"; then
+      echo "  unchanged"
+    else
+      echo "  differs"
+      [[ "$check" == "yes" ]] || diff -u "$live" "$expected" || true
+      drift=1
+    fi
+  done < <(instruction_targets)
+
+  rm -f "$expected"
+  if [[ "$check" == "yes" && "$drift" -ne 0 ]]; then
+    echo
+    echo "Global instructions drifted. Run: mise run ai:install:instructions"
+    exit 1
+  fi
+}
+
+install_instructions() {
+  local mode="dry-run"
+  if is_apply "${1:-}"; then
+    mode="apply"
+  fi
+
+  local backup_root
+  backup_root="$(state_home)/backups/instructions/$(timestamp)"
+
+  echo "Global instructions install ($mode)"
+  echo
+
+  while IFS=$'\t' read -r client file live; do
+    local generated="$ai_dir/generated/instructions/$client/$file"
+
+    if [[ ! -f "$generated" ]]; then
+      echo "$client: missing generated file; run scripts/ai-stack generate-instructions"
+      continue
+    fi
+
+    if [[ -f "$live" ]] && cmp -s "$generated" "$live"; then
+      echo "$client: unchanged $live"
+      continue
+    fi
+
+    if [[ "$mode" == "dry-run" ]]; then
+      if [[ -f "$live" ]]; then
+        echo "$client: would update $live"
+      else
+        echo "$client: would create $live"
+      fi
+      continue
+    fi
+
+    mkdir -p "$(dirname "$live")"
+    if [[ -f "$live" ]]; then
+      mkdir -p "$backup_root/$client"
+      cp "$live" "$backup_root/$client/$file"
+    fi
+    cp "$generated" "$live"
+    echo "$client: installed $live"
+  done < <(instruction_targets)
+
+  echo
+  if [[ "$mode" == "dry-run" ]]; then
+    echo "Dry run only. Re-run with --apply to write the live files."
+  else
+    echo "Backups: $backup_root"
+  fi
+}
+
 install_commands() {
   local mode="dry-run"
   if is_apply "${1:-}"; then
@@ -2044,6 +2168,15 @@ case "${1:-}" in
     ;;
   diff-mcp)
     diff_mcp
+    ;;
+  generate-instructions)
+    generate_instructions
+    ;;
+  diff-instructions)
+    diff_instructions "${2:-}"
+    ;;
+  install-instructions)
+    install_instructions "${2:-}"
     ;;
   install-commands)
     install_commands "${2:-}"
