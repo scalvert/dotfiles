@@ -22,6 +22,7 @@ packages/ai/
   registry.yaml       # Canonical inventory and lifecycle decisions
   commands/           # Canonical command specs for generated client shims
   generated/          # Generated per-client artifacts, reviewed before install
+  instructions/       # Global agent instructions (one source for every client)
   mcp/servers.json    # Public-safe shared stdio MCP catalog
   prompts/            # Reusable prompt source material
   skills/             # Skill source-of-truth notes and manifests
@@ -51,6 +52,22 @@ servers stay local.
 
 Agent manifests under `agents/` must define explicit, task-scoped agents with
 narrow purposes. Avoid implicit always-on orchestration.
+
+## Global Instructions
+
+`instructions/global.md` is the single source for global agent instructions. It
+holds personal preferences only. Rules a repo needs belong in that repo's
+`AGENTS.md`, and safety defaults ship inside the skills that need them.
+
+```bash
+mise run ai:generate:instructions       # write generated/instructions/<client>/
+mise run ai:install:instructions:dry-run
+mise run ai:install:instructions        # ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md, ~/.glean/agent/AGENTS.md
+mise run ai:check:instructions          # exit 1 on drift
+```
+
+Installs back up the files they replace under
+`${XDG_STATE_HOME:-~/.local/state}/ai-stack/backups/instructions/`.
 
 ## Completion Audit
 

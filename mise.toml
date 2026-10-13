@@ -163,6 +163,26 @@ run = "./scripts/ai-stack snapshot-skills"
 description = "Compare live managed skills against the checked-in snapshot"
 run = "./scripts/ai-stack skill-drift"
 
+[tasks."ai:generate:instructions"]
+description = "Generate global agent instructions (Claude, Codex, Tau) from packages/ai/instructions/global.md"
+run = "./scripts/ai-stack generate-instructions"
+
+[tasks."ai:diff:instructions"]
+description = "Compare generated global agent instructions against the live files"
+run = "./scripts/ai-stack diff-instructions"
+
+[tasks."ai:check:instructions"]
+description = "Fail when global agent instructions drift from packages/ai/instructions/global.md"
+run = "./scripts/ai-stack diff-instructions --check"
+
+[tasks."ai:install:instructions:dry-run"]
+description = "Preview installing generated global agent instructions"
+run = "./scripts/ai-stack install-instructions"
+
+[tasks."ai:install:instructions"]
+description = "Install generated global agent instructions with backups"
+run = "./scripts/ai-stack install-instructions --apply"
+
 [tasks."ai:generate:commands"]
 description = "Generate client command shims from canonical AI command specs"
 run = "./scripts/ai-stack generate-commands"
