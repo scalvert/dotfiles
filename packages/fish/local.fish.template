@@ -11,6 +11,13 @@
 # set -gx CLOUD_ML_REGION us-east5
 # set -gx ANTHROPIC_VERTEX_PROJECT_ID your-project-id
 
+# Work GitHub account: gh keeps it in ~/.config/gh-work by default. Set this to
+# use a different directory.
+# set -gx GH_WORK_CONFIG_DIR "$HOME/.config/gh-my-work-account"
+
+# Work repo paths and tools (machine-local — keep employer details off git)
+# fish_add_path "$HOME/workspace/some-work-repo/bin"
+
 # GitHub / npm / gcloud: use on-demand auth, never store tokens here
 #   gh auth login    |    npm login    |    gcloud auth login
 

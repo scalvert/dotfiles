@@ -55,6 +55,21 @@ substance.
 
 ## GitHub accounts
 
-`gh` has two accounts. Repos owned by `scalvert` use the `scalvert` account.
-Work repos, including `gleanwork`, use `steve-calvert-glean`. Run
-`gh auth switch -u <account>` before a write, and switch back afterward.
+The `gh` account depends on the directory, through `GH_CONFIG_DIR`. Each
+account has its own config directory:
+
+- Under `~/workspace/personal/`: `GH_CONFIG_DIR=~/.config/gh-scalvert`
+  (account `scalvert`).
+- Everywhere else, including work repos: the work account. Its directory is
+  `$GH_WORK_CONFIG_DIR` when that is set, and `~/.config/gh-work` otherwise.
+
+A fish hook sets this when an interactive shell changes directory. Agent shell
+commands don't run that hook, so they inherit whatever value the session
+started with. Set the variable yourself on every `gh` command and every `git`
+command that talks to GitHub over HTTPS (push, fetch, pull, clone), picked
+from the repo's path. For example:
+`GH_CONFIG_DIR=$HOME/.config/gh-scalvert gh pr create ...`.
+
+Do not use `gh auth switch`. Each config directory is meant to hold one
+account, so switching fails ("no accounts matched that criteria") or changes the
+account for every later command. Check with `GH_CONFIG_DIR=... gh api user --jq .login`.
