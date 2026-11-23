@@ -26,7 +26,8 @@ gh-personal; gh auth login     # scalvert (personal)
 gh-work;     gh auth login      # work account
 ```
 
-### 4. Pull the stack (if install didn't already)
+### 4. Pull the stack
+The first `mise run install` runs before `gh` is signed in, so it cannot clone the private `wiki` repo. Run this once step 3 is done:
 ```sh
 mise run stack:install          # clones wiki + skills into ~/workspace/personal
 ```
@@ -36,7 +37,9 @@ mise run stack:install          # clones wiki + skills into ~/workspace/personal
 mise run ai:skills:install      # all skills, plus Claude Code and Codex plugins
 mise run ai:skills:status       # what is missing, what is not declared
 ```
-The plugin step needs `claude` and `codex` on `PATH`. If either was missing during install, install it and run the task again.
+The plugin step needs `claude` and `codex` on `PATH`. The Brewfile installs both. If either was missing during install, install it and run the task again.
+
+The Plannotator skills call the `plannotator` CLI, which has no Homebrew formula. Install it from <https://plannotator.ai>.
 
 ### 5. Work machine only — extra apps + work identity
 ```sh
