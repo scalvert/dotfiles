@@ -76,6 +76,41 @@ packages/ai/skills/<id>/
 
 The manifest should track owner, status, source, target clients, last reviewed date, and replacement/archive notes. Client-specific folders should be generated or synchronized from this structure when practical.
 
+## Skills and Plugins Manifest
+
+`packages/ai/skills.json` declares every agent skill and plugin. One command installs them all:
+
+```bash
+mise run ai:skills:install
+```
+
+`mise run install` runs it as a phase, so a fresh machine gets the full set.
+
+The file has three parts:
+
+- `agents`: the agents that `npx skills` links skills into.
+- `plugins`: for the `claude` and `codex` CLIs, the marketplaces to add and the plugins to install. Use a plugin when a package ships more than skills, such as hooks, agents, or shared docs. `scalvert/skills` and the Elephant-Goldfish Model are plugins for that reason.
+- `skills` and `lockVersion`: the body of a `skills-lock.json`, as `npx skills` writes it. Each GitHub entry pins a commit, so a restore installs the version that was reviewed.
+
+`scripts/skills install` writes the `skills` part to `~/skills-lock.json` and runs `npx skills install` from `$HOME`. That installs into `~/.agents/skills` and links `~/.claude/skills`. The restore replaces the lock file, so the script copies it into `$HOME`. Do not symlink it.
+
+Change the set from `$HOME`, then save the result back into the manifest:
+
+```bash
+cd ~
+npx skills add <owner/repo> --skill <name> --agent claude-code codex -y
+npx skills update -p -y          # move pinned skills to the latest commit
+npx skills remove <name> -y
+mise run ai:skills:save          # copy ~/skills-lock.json into skills.json
+```
+
+Notes:
+
+- The restore does not remove a skill when its entry is deleted. `mise run ai:skills:status` lists skills that are missing and skills that are on disk but not declared.
+- The plugin step fails when `claude` or `codex` is not on `PATH`. Install the CLI, then run the task again. Running it again is safe.
+- `resolving-merge-conflicts` is pinned to the last `mattpocock/skills` commit that had it. Upstream removed it on 2026-09-24, so an update cannot find it.
+- A package installed as a plugin must not also be listed under `skills`, or the agent loads every skill twice.
+
 ## Feedback Loop
 
 Monthly:

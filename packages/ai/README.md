@@ -20,6 +20,7 @@ It does not own app state, auth tokens, chat history, generated caches, or machi
 ```text
 packages/ai/
   registry.yaml       # Canonical inventory and lifecycle decisions
+  skills.json         # Every agent skill and plugin to install (scripts/skills)
   commands/           # Canonical command specs for generated client shims
   generated/          # Generated per-client artifacts, reviewed before install
   instructions/       # Global agent instructions (one source for every client)

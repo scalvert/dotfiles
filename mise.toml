@@ -91,6 +91,18 @@ run = "./scripts/ai-stack validate"
 description = "Clone the personal stack repos (wiki, skills) if absent"
 run = "./scripts/stack install"
 
+[tasks."ai:skills:install"]
+description = "Install every agent skill and plugin declared in packages/ai/skills.json"
+run = "./scripts/skills install"
+
+[tasks."ai:skills:status"]
+description = "Compare installed agent skills with packages/ai/skills.json"
+run = "./scripts/skills status"
+
+[tasks."ai:skills:save"]
+description = "Save ~/skills-lock.json back into packages/ai/skills.json after adding or updating skills"
+run = "./scripts/skills save"
+
 [tasks."ai:doctor"]
 description = "Run AI stack architecture and generated-artifact checks"
 run = "./scripts/ai-stack doctor"

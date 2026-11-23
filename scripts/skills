@@ -1,0 +1,208 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# One file declares every agent skill and plugin: packages/ai/skills.json.
+# This script installs all of them.
+#
+#   agents      Agents that `npx skills` links the skills into.
+#   skillsCli   Version of the `skills` npm package to run.
+#   plugins     Per CLI (claude, codex): marketplaces to add, plugins to install.
+#   lockVersion, skills
+#               The body of a skills-lock.json, as `npx skills` writes it.
+#
+# `npx skills install` restores a skills-lock.json into the directory that
+# holds it. Run from $HOME, that directory is the user-level skill folder
+# (~/.agents/skills, linked into ~/.claude/skills). The restore replaces the
+# lock file, so this script copies it into $HOME. Do not symlink it.
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+manifest="${SKILLS_MANIFEST:-$repo_root/packages/ai/skills.json}"
+home_lock="$HOME/skills-lock.json"
+skills_dir="$HOME/.agents/skills"
+
+usage() {
+  echo "usage: scripts/skills <install|status|save|lock>" >&2
+}
+
+need() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "skills: $1 not found on PATH" >&2
+    exit 1
+  fi
+}
+
+# Stop early when jq is missing or the manifest is not the expected shape, so
+# a broken read is never mistaken for an empty manifest.
+check_manifest() {
+  need jq
+  if ! jq -e '
+      (.agents | type == "array" and length > 0)
+      and (.skillsCli | type == "string")
+      and (.lockVersion | type == "number")
+      and (.skills | type == "object")
+    ' "$manifest" >/dev/null; then
+    echo "skills: cannot read a valid manifest at $manifest" >&2
+    exit 1
+  fi
+}
+
+declared_skills() {
+  jq -r '.skills | keys[]' "$manifest" | sort
+}
+
+# Print the skills-lock.json that the manifest describes.
+lock_json() {
+  jq '{version: .lockVersion, skills: .skills}' "$manifest"
+}
+
+install_skills() {
+  local cli agent
+  local -a agents=()
+
+  cli="$(jq -r '.skillsCli' "$manifest")"
+  while IFS= read -r agent; do
+    agents+=("$agent")
+  done < <(jq -r '.agents[]' "$manifest")
+  if [ "${#agents[@]}" -eq 0 ]; then
+    echo "skills: the manifest lists no agents" >&2
+    return 1
+  fi
+
+  # The manifest is the source of truth. Keep a copy of a home lock that
+  # records skills the manifest does not, so an unsaved `npx skills add` is
+  # not lost without a trace.
+  if [ -f "$home_lock" ]; then
+    local extra
+    extra="$(comm -13 <(declared_skills) <(jq -r '.skills | keys[]' "$home_lock" | sort))"
+    if [ -n "$extra" ]; then
+      cp "$home_lock" "$home_lock.bak"
+      echo "skills: $home_lock records skills the manifest does not:" >&2
+      printf '%s\n' "$extra" | sed 's/^/  - /' >&2
+      echo "skills: saved it as $home_lock.bak. To keep them, restore that file and run 'scripts/skills save'." >&2
+    fi
+  fi
+
+  lock_json >"$home_lock"
+  echo "skills: restoring $(declared_skills | wc -l | tr -d ' ') skills for: ${agents[*]}"
+  if ! (cd "$HOME" && npx --yes "skills@$cli" install --agent "${agents[@]}" </dev/null); then
+    echo "skills: restore failed for one or more skills" >&2
+    return 1
+  fi
+}
+
+# install_plugins <cli>   where <cli> is a key under .plugins (claude or codex).
+install_plugins() {
+  local cli="$1" item ok failed=0
+
+  case "$cli" in
+    claude | codex) ;;
+    *)
+      echo "skills: no plugin installer for '$cli' (supported: claude, codex)" >&2
+      return 1
+      ;;
+  esac
+
+  if ! command -v "$cli" >/dev/null 2>&1; then
+    echo "skills: $cli not found; its plugins are not installed. Install $cli, then re-run 'mise run ai:skills:install'." >&2
+    return 1
+  fi
+
+  while IFS= read -r item; do
+    [ -n "$item" ] || continue
+    if ! "$cli" plugin marketplace add "$item" </dev/null; then
+      echo "skills: $cli marketplace failed: $item" >&2
+      failed=1
+    fi
+  done < <(jq -r --arg cli "$cli" '.plugins[$cli].marketplaces // [] | .[]' "$manifest")
+
+  while IFS= read -r item; do
+    [ -n "$item" ] || continue
+    ok=1
+    case "$cli" in
+      claude) claude plugin install "$item" </dev/null || ok=0 ;;
+      codex) codex plugin add "$item" </dev/null || ok=0 ;;
+    esac
+    if [ "$ok" -eq 0 ]; then
+      echo "skills: $cli plugin failed: $item" >&2
+      failed=1
+    fi
+  done < <(jq -r --arg cli "$cli" '.plugins[$cli].install // [] | .[]' "$manifest")
+
+  return "$failed"
+}
+
+install() {
+  local cli failed=0
+
+  check_manifest
+  need npx
+
+  install_skills || failed=1
+
+  while IFS= read -r cli; do
+    [ -n "$cli" ] || continue
+    install_plugins "$cli" || failed=1
+  done < <(jq -r '.plugins // {} | keys[]' "$manifest")
+
+  if [ "$failed" -ne 0 ]; then
+    echo "skills: finished with failures (see above). Re-running is safe." >&2
+    return 1
+  fi
+  echo "skills: every declared skill and plugin is installed"
+}
+
+# Compare the manifest with what is on disk. `npx skills install` does not
+# remove a skill when its entry is deleted, so this is how to see leftovers.
+status() {
+  local installed missing extra
+
+  check_manifest
+  installed="$(ls -1 "$skills_dir" 2>/dev/null | sort || true)"
+  missing="$(comm -23 <(declared_skills) <(printf '%s\n' "$installed"))"
+  extra="$(comm -13 <(declared_skills) <(printf '%s\n' "$installed" | sed '/^$/d'))"
+
+  echo "declared: $(declared_skills | wc -l | tr -d ' ') skills in $manifest"
+  if [ -n "$missing" ]; then
+    echo "missing from $skills_dir:"
+    printf '%s\n' "$missing" | sed 's/^/  - /'
+  fi
+  if [ -n "$extra" ]; then
+    echo "in $skills_dir but not declared (installed by a plugin or installer, or left over):"
+    printf '%s\n' "$extra" | sed 's/^/  - /'
+  fi
+  [ -z "$missing" ]
+}
+
+# Copy the lock that `npx skills` maintains in $HOME back into the manifest.
+# Run this after `npx skills add` or `npx skills update` from $HOME.
+save() {
+  local tmp
+
+  check_manifest
+  if [ ! -f "$home_lock" ]; then
+    echo "skills: $home_lock not found; run 'scripts/skills install' first" >&2
+    exit 1
+  fi
+  tmp="$(mktemp)"
+  jq --slurpfile lock "$home_lock" \
+    '.lockVersion = $lock[0].version
+     | .skills = ($lock[0].skills | to_entries | sort_by(.key) | from_entries)' \
+    "$manifest" >"$tmp"
+  cat "$tmp" >"$manifest"
+  rm -f "$tmp"
+  echo "skills: saved $(declared_skills | wc -l | tr -d ' ') skills to $manifest"
+}
+
+case "${1:-install}" in
+  install) install ;;
+  status) status ;;
+  save) save ;;
+  lock)
+    check_manifest
+    lock_json
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
