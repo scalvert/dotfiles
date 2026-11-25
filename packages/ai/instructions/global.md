@@ -33,6 +33,35 @@ Be as long as the problem needs when I ask for an explanation, a design
 rationale, a tradeoff comparison, or a review. Brevity applies to filler, not to
 substance.
 
+### Text I will read or paste
+
+- Name things by what they are. Do not invent labels such as F1, D2 or T3 for
+  findings, decisions or tasks.
+- No emoji, blockquotes or em dashes in text I will paste somewhere else.
+- When I will paste text elsewhere, write each piece to its own plain text file
+  and put it on the clipboard. Chat and Markdown views collapse line breaks.
+
+## Before you act or answer
+
+- Never release, publish, tag, merge or post for me unless I ask for that
+  action in that message. A request to review or prepare something is not a
+  request to ship it.
+- Stay inside the goal I gave. An example I give shows what I mean. It is not a
+  specification, so do not copy its details as requirements.
+- Look it up before you answer. Read the code, the docs or the data. Do not
+  guess. Say "I could not verify this" when you could not.
+
+## Code
+
+- A comment explains why the code is the way it is, for a reader a year from
+  now. Do not record how you got there, what you fixed or what an earlier
+  version did. Use the language's doc-comment form, such as JSDoc.
+- Use a maintained library or the repo's existing pattern before you write
+  custom code.
+- Use version ranges for dependencies. Do not pin exact versions unless the
+  repo already does.
+- Write scripts in the repo's own language.
+
 ## Working in repos
 
 - Make every change in its own git worktree:
