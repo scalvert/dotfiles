@@ -86,23 +86,27 @@ mise run ai:skills:install
 
 `mise run install` runs it as a phase, so a fresh machine gets the full set.
 
-The file has three parts:
+The file has four parts:
 
 - `agents`: the agents that `npx skills` links skills into.
+- `skillsCli`: the version of the `skills` npm package that the restore runs. Bump it to move to a newer `npx skills`.
 - `plugins`: for the `claude` and `codex` CLIs, the marketplaces to add and the plugins to install. Use a plugin when a package ships more than skills, such as hooks, agents, or shared docs. `scalvert/skills` and the Elephant-Goldfish Model are plugins for that reason.
 - `skills` and `lockVersion`: the body of a `skills-lock.json`, as `npx skills` writes it. Each GitHub entry pins a commit, so a restore installs the version that was reviewed.
 
 `scripts/skills install` writes the `skills` part to `~/skills-lock.json` and runs `npx skills install` from `$HOME`. That installs into `~/.agents/skills` and links `~/.claude/skills`. The restore replaces the lock file, so the script copies it into `$HOME`. Do not symlink it.
 
-Change the set from `$HOME`, then save the result back into the manifest:
+Change the set from `$HOME`, then save the result back into the manifest. Use the `skills` version in `skillsCli`, so the lock is written by the same CLI that restores it:
 
 ```bash
 cd ~
-npx skills add <owner/repo> --skill <name> --agent claude-code codex -y
-npx skills update -p -y          # move pinned skills to the latest commit
-npx skills remove <name> -y
+npx skills@1.9.0 add <owner/repo> --skill <name> --agent claude-code codex -y
+npx skills@1.9.0 update -p -y    # move pinned skills to the latest commit
+npx skills@1.9.0 remove <name> -y
 mise run ai:skills:save          # copy ~/skills-lock.json into skills.json
+mise run ai:skills:lock          # print the skills-lock.json the manifest describes
 ```
+
+When you bump `skillsCli`, change the version in these commands too.
 
 Notes:
 

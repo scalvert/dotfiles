@@ -103,6 +103,10 @@ run = "./scripts/skills status"
 description = "Save ~/skills-lock.json back into packages/ai/skills.json after adding or updating skills"
 run = "./scripts/skills save"
 
+[tasks."ai:skills:lock"]
+description = "Print the skills-lock.json that packages/ai/skills.json describes"
+run = "./scripts/skills lock"
+
 [tasks."ai:doctor"]
 description = "Run AI stack architecture and generated-artifact checks"
 run = "./scripts/ai-stack doctor"

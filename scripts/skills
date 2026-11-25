@@ -40,6 +40,10 @@ check_manifest() {
       and (.skillsCli | type == "string")
       and (.lockVersion | type == "number")
       and (.skills | type == "object")
+      and ((.plugins // {}) | type == "object" and all(.[];
+        type == "object"
+        and ((.marketplaces // []) | type == "array" and all(.[]; type == "string"))
+        and ((.install // []) | type == "array" and all(.[]; type == "string"))))
     ' "$manifest" >/dev/null; then
     echo "skills: cannot read a valid manifest at $manifest" >&2
     exit 1
@@ -69,16 +73,24 @@ install_skills() {
   fi
 
   # The manifest is the source of truth. Keep a copy of a home lock that
-  # records skills the manifest does not, so an unsaved `npx skills add` is
-  # not lost without a trace.
+  # differs from it, so an unsaved `npx skills add` or `npx skills update`
+  # is not lost without a trace. Compare whole locks, not just skill names:
+  # an update changes pins under existing names. A lock that jq cannot parse
+  # is kept too, since its contents are unknown.
   if [ -f "$home_lock" ]; then
     local extra
-    extra="$(comm -13 <(declared_skills) <(jq -r '.skills | keys[]' "$home_lock" | sort))"
-    if [ -n "$extra" ]; then
+    if ! jq -e 'type == "object"' "$home_lock" >/dev/null 2>&1; then
       cp "$home_lock" "$home_lock.bak"
-      echo "skills: $home_lock records skills the manifest does not:" >&2
-      printf '%s\n' "$extra" | sed 's/^/  - /' >&2
-      echo "skills: saved it as $home_lock.bak. To keep them, restore that file and run 'scripts/skills save'." >&2
+      echo "skills: cannot parse $home_lock; saved it as $home_lock.bak." >&2
+    elif ! cmp -s <(jq -S . "$home_lock") <(lock_json | jq -S .); then
+      cp "$home_lock" "$home_lock.bak"
+      echo "skills: $home_lock differs from the manifest (added, removed or updated skills)." >&2
+      extra="$(comm -13 <(declared_skills) <(jq -r '.skills | objects | keys[]' "$home_lock" | sort))"
+      if [ -n "$extra" ]; then
+        echo "skills: it records skills the manifest does not:" >&2
+        printf '%s\n' "$extra" | sed 's/^/  - /' >&2
+      fi
+      echo "skills: saved it as $home_lock.bak. To keep it, restore that file and run 'scripts/skills save'." >&2
     fi
   fi
 
