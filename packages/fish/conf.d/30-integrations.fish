@@ -49,7 +49,8 @@ end
 
 # GitHub CLI identity switching by directory. Each account has its own gh
 # config directory. The work directory defaults to ~/.config/gh-work; set
-# GH_WORK_CONFIG_DIR in local.fish to use another one.
+# GH_WORK_CONFIG_DIR in local.fish to use another one. config.fish makes the
+# first call, after local.fish loads, because conf.d runs before local.fish.
 function __gh_work_config_dir
     if set -q GH_WORK_CONFIG_DIR; and test -n "$GH_WORK_CONFIG_DIR"
         echo $GH_WORK_CONFIG_DIR
@@ -59,10 +60,9 @@ function __gh_work_config_dir
 end
 
 function __gh_set_config_dir --on-variable PWD
-    if string match -q "$HOME/workspace/personal*" $PWD
+    if test "$PWD" = "$HOME/workspace/personal"; or string match -q -- "$HOME/workspace/personal/*" $PWD
         set -gx GH_CONFIG_DIR "$HOME/.config/gh-scalvert"
     else
         set -gx GH_CONFIG_DIR (__gh_work_config_dir)
     end
 end
-__gh_set_config_dir
