@@ -101,11 +101,6 @@ mcp_servers:
     profile: shared-stdio
     command: npx
     args: ["-y", "mcp-package-version"]
-  glean_default:
-    status: keep
-    profile: client-http
-    url: local-only
-    notes: Configure the company Glean MCP URL in local client config. Do not put auth or internal hostnames in git.
   linear:
     status: keep
     profile: client-http
@@ -126,12 +121,6 @@ skills:
       - ~/.claude/commands/plannotator-*.md
       - ~/.config/opencode/commands/plannotator-*.md
     target: packages/ai/skills/plannotator plus generated client shims
-  glean:
-    status: keep
-    sources:
-      - ~/.agents/skills/glean-*
-      - ~/.claude/skills/glean-cli
-    target: managed external skill bundle with lock metadata
   linear:
     status: keep
     sources:
@@ -154,11 +143,6 @@ skills:
     sources:
       - ~/.cursor/skills-cursor
     target: Cursor-managed; inventory only.
-  scio_go_style:
-    status: keep
-    sources:
-      - ~/.codex/skills/scio-go-style
-    target: project/work-specific skill; consider promoting only if reused outside scio.
   council_and_omc:
     status: replace
     sources:
@@ -178,17 +162,13 @@ prompts:
   cursor_go_review:
     status: consolidate
     source: ~/.cursor/commands/go-review.md
-    target: packages/ai/prompts/scio-go-review.md or project-local scio skill
+    target: packages/ai/prompts/go-review.md or a project-local skill
 
 knowledge:
   obsidian:
     status: keep
     source: ~/Documents/Obsidian Vault
     notes: Personal long-term notes; do not merge into tool instructions.
-  glean:
-    status: keep
-    source: Glean MCP and CLI skills
-    notes: Enterprise knowledge access; keep as external system.
   claude_memory:
     status: consolidate
     source: ~/.claude/CLAUDE.md and hooks
@@ -205,7 +185,7 @@ lifecycle:
     - mise runtime management
     - fish shell configuration
     - Neovim CodeCompanion integration
-    - Glean and Linear skill bundles
+    - Linear skill bundles
   consolidate:
     - Plannotator skills and commands
     - MCP catalog

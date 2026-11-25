@@ -6,3 +6,10 @@
 if test -f ~/.config/fish/local.fish
     source ~/.config/fish/local.fish
 end
+
+# Set GH_CONFIG_DIR for the starting directory. This runs here, not in
+# conf.d/30-integrations.fish, so a GH_WORK_CONFIG_DIR set in local.fish
+# applies before the first cd.
+if functions -q __gh_set_config_dir
+    __gh_set_config_dir
+end

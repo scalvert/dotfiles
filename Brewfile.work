@@ -1,6 +1,6 @@
 # Work-only apps. Install on work machines with: mise run brew:work
 # The base Brewfile covers everything common to all machines; this layers the
-# Glean/work development tools on top. Personal machines skip this file.
+# work development tools on top. Personal machines skip this file.
 
 # GPG Suite (GPG tooling / Keychain integration)
 cask "gpg-suite"

@@ -1,5 +1,7 @@
-function gh-work --description "Switch to work GitHub account (steve-calvert-glean) with SSH"
-    gh auth switch --user steve-calvert-glean
-    gh config set git_protocol ssh --host github.com
-    echo "Switched to steve-calvert-glean (work) with SSH"
+function gh-work --description "Use the work GitHub account in this shell"
+    # Point gh at the work config directory. It holds one account, so there is
+    # nothing to switch. On a new machine, follow with: gh auth login
+    # (choose the protocol your employer uses)
+    set -gx GH_CONFIG_DIR (__gh_work_config_dir)
+    echo "gh now uses $GH_CONFIG_DIR (work) until the next cd"
 end

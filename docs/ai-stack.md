@@ -37,7 +37,7 @@ Keep:
 - mise as the runtime/tool version layer
 - fish as the primary shell
 - Neovim CodeCompanion as an editor client
-- Glean, Google Workspace, and Linear as external knowledge/workflow integrations
+- Google Workspace and Linear as external knowledge/workflow integrations
 - Obsidian as personal long-term notes
 
 Consolidate:
