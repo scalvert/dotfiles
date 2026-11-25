@@ -130,6 +130,8 @@ cask "windsurf"
 cask "cursor"
 # OpenAI Codex
 cask "codex"
+# Claude Code. scripts/skills needs the claude CLI to install plugins.
+cask "claude-code"
 # Prevents the Mac from sleeping
 cask "keepingyouawake"
 # Screenshot and screen-recording tool

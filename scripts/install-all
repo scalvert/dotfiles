@@ -11,6 +11,7 @@ phases=(
   dotfiles:install
   ai:install
   stack:install
+  ai:skills:install
   nvim:restore
 )
 

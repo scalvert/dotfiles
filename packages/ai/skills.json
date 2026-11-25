@@ -1,0 +1,245 @@
+{
+  "agents": [
+    "claude-code",
+    "codex"
+  ],
+  "skillsCli": "1.9.0",
+  "plugins": {
+    "claude": {
+      "marketplaces": [
+        "anthropics/claude-plugins-official",
+        "https://github.com/scalvert/skills",
+        "google/elephant-goldfish-model"
+      ],
+      "install": [
+        "scalvert@scalvert",
+        "egm@egm",
+        "chrome-devtools-mcp@claude-plugins-official",
+        "claude-code-setup@claude-plugins-official",
+        "code-review@claude-plugins-official",
+        "code-simplifier@claude-plugins-official",
+        "commit-commands@claude-plugins-official",
+        "context7@claude-plugins-official",
+        "pr-review-toolkit@claude-plugins-official",
+        "skill-creator@claude-plugins-official",
+        "typescript-lsp@claude-plugins-official"
+      ]
+    },
+    "codex": {
+      "marketplaces": [
+        "https://github.com/scalvert/skills",
+        "google/elephant-goldfish-model"
+      ],
+      "install": [
+        "scalvert@scalvert",
+        "egm@egm"
+      ]
+    }
+  },
+  "lockVersion": 2,
+  "skills": {
+    "archify": {
+      "source": "archify.si",
+      "sourceUrl": "https://archify.si",
+      "sourceType": "well-known",
+      "computedHash": "87d91b304334bc5b5e70158e3f111260cb9d71b80790f106cb106cdbbbb73f63",
+      "wellKnownDigest": "sha256:7706bf27cac46976dedd4f9579daa9d4d491681a634a5f18c571f451321ca5d2"
+    },
+    "codebase-design": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/codebase-design/SKILL.md",
+      "computedHash": "d40f025dc1b0f2020663260f38f2bcb8d6ed3523afb11e5fda624b01238677e8"
+    },
+    "diagnosing-bugs": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
+      "computedHash": "87c78ae966e591f9ceb177789cc5cc9de69277cd26679ffd36ca5300f430d513"
+    },
+    "domain-modeling": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/domain-modeling/SKILL.md",
+      "computedHash": "b78689833404148c769077355e12dbe5ad996a158a1e21e58ddf169e439d9d8c"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "commit": "57217cf86ba38148a57af9e90d14a4c049558330",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "7bc223e2aafbdbf6e50ea243ba6ef67fe432bb069ab439fea0390795dac0bf7f"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/grilling/SKILL.md",
+      "computedHash": "485451958784497cd4c4dbea13cb5bbb579da58fac0d0e45f3bcb310fab68ac7"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/handoff/SKILL.md",
+      "computedHash": "f60a2c3688379b7a306b3a7b8dd4120eab39da44c74fa2cb62d6424935f04aa7"
+    },
+    "humanizer": {
+      "source": "blader/humanizer",
+      "commit": "a32f24407364c74c812b43c15926d638bee1e072",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "6da5d71e32eb66770b4c1ebe38b7e5c271bfca6290c9248aeb8449a84dbfe914"
+    },
+    "hyperframes": {
+      "source": "heygen-com/hyperframes",
+      "commit": "4f863db6d7995663d0f320cb433ab7a9f1d004fb",
+      "sourceType": "github",
+      "skillPath": "skills/hyperframes/SKILL.md",
+      "computedHash": "2410221fb18d256b900c9ea8b15b8e3e7f119c7da153d24c55f9b854b7f07eb7"
+    },
+    "hyperframes-cli": {
+      "source": "heygen-com/hyperframes",
+      "commit": "4f863db6d7995663d0f320cb433ab7a9f1d004fb",
+      "sourceType": "github",
+      "skillPath": "skills/hyperframes-cli/SKILL.md",
+      "computedHash": "3d0969e461fc5ccf87e731f407f337f42c40ae1a2f9fcbbb0c6d281716a4bf49"
+    },
+    "hyperframes-registry": {
+      "source": "heygen-com/hyperframes",
+      "commit": "4f863db6d7995663d0f320cb433ab7a9f1d004fb",
+      "sourceType": "github",
+      "skillPath": "skills/hyperframes-registry/SKILL.md",
+      "computedHash": "e9580a8976963444ef861163f4b575823e68f6e9a5f1b57abd73a88d375e29ba"
+    },
+    "implement": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/implement/SKILL.md",
+      "computedHash": "560465496ad0669329993bfdd0604e5c93b5c2446309a76f486040010b063908"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "f0820b18426a7d9a6c823a890988ba0ac70bf0fd596d30d7ef07c88558728c23"
+    },
+    "media-use": {
+      "source": "heygen-com/hyperframes",
+      "commit": "4f863db6d7995663d0f320cb433ab7a9f1d004fb",
+      "sourceType": "github",
+      "skillPath": "skills/media-use/SKILL.md",
+      "computedHash": "66fa7e18cca0c43944f2fb581889d04886d4f61a99bfde0af6d912a7f13b28f8"
+    },
+    "plannotator-compound": {
+      "source": "backnotprop/plannotator",
+      "commit": "94130447e7328c4b9c52b2836c9efaa79b8ed8bb",
+      "sourceType": "github",
+      "skillPath": "apps/skills/extra/plannotator-compound/SKILL.md",
+      "computedHash": "9a6d6f0464510ad7faeba2b3465be2e645238cbe4445f1cce8cefad6fbb10dd8"
+    },
+    "plannotator-setup-goal": {
+      "source": "backnotprop/plannotator",
+      "commit": "94130447e7328c4b9c52b2836c9efaa79b8ed8bb",
+      "sourceType": "github",
+      "skillPath": "apps/skills/extra/plannotator-setup-goal/SKILL.md",
+      "computedHash": "b473f9d646a99222ef2ea44d3777e63441290fc96dcb052ad33a3bb13638a075"
+    },
+    "plannotator-visual-explainer": {
+      "source": "backnotprop/plannotator",
+      "commit": "94130447e7328c4b9c52b2836c9efaa79b8ed8bb",
+      "sourceType": "github",
+      "skillPath": "apps/skills/extra/plannotator-visual-explainer/SKILL.md",
+      "computedHash": "fefebd95c8644e4ecca247d76a094130acbe02e94a0916c0825a4077ec6756b8"
+    },
+    "prototype": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/prototype/SKILL.md",
+      "computedHash": "1e3ba2202a5b77b8aa50bc4447432331d6e42590e53ec0935689662cfed199ca"
+    },
+    "research": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/research/SKILL.md",
+      "computedHash": "7662666af51f8b1672ed7d88360d4b82656da21bb7b11c49e956eeb3036b85d5"
+    },
+    "resolving-merge-conflicts": {
+      "source": "mattpocock/skills",
+      "commit": "153fc1b93de6584562765cdce299324e1ff9e661",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/resolving-merge-conflicts/SKILL.md",
+      "computedHash": "d92926f681907a75982f280875dfd1f06610a39680a00f361ae08a88bf2233cc"
+    },
+    "seo-audit": {
+      "source": "coreyhaines31/marketingskills",
+      "commit": "5b2b400eec1e7e1cec76245a715d0b0d4fd2a9c1",
+      "sourceType": "github",
+      "skillPath": "skills/seo-audit/SKILL.md",
+      "computedHash": "d42f6f32bb62f8ebce93826ef33a7b663f2259b2891a0992f3d63dbd46f0f5ad"
+    },
+    "seo-local": {
+      "source": "agricidaniel/claude-seo",
+      "commit": "468ed5b0d9e3249394783710e54abb02837e326b",
+      "sourceType": "github",
+      "skillPath": "skills/seo-local/SKILL.md",
+      "computedHash": "1aab8d93e3ff31d8f88485eed1e6633ee6dc818f832179a478b6581ecd5a5e68"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "e3e0f78ff1c2d52ffefa0378baa1e80e129d359288cf9a56f4e59afcd2aac86c"
+    },
+    "teach": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/teach/SKILL.md",
+      "computedHash": "31bb3eed09dd2787e290e933def99fbf7d65044a29119c224af47c01404ab228"
+    },
+    "to-spec": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/to-spec/SKILL.md",
+      "computedHash": "eb934b5eda9523c7853a2741544bd4721ee1bea471f5a04f8397827f67bdbdda"
+    },
+    "to-tickets": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/to-tickets/SKILL.md",
+      "computedHash": "17496514c92954f68eacdf2b1221e2ddb39fa231b83f03c70bc7d4422f704b2d"
+    },
+    "triage": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/triage/SKILL.md",
+      "computedHash": "4342a07c9ebe0696713ec93a883c46e56503a587a34d824fabab5ca61e3bdfbb"
+    },
+    "visual-explainer": {
+      "source": "nicobailon/visual-explainer",
+      "commit": "9d5f880b7e8e0a9a80c890b8e1bb6918b68481ad",
+      "sourceType": "github",
+      "skillPath": "plugins/visual-explainer/SKILL.md",
+      "computedHash": "305dcaef5f5ee1cd49083609b3ab182b9c55293590d4fbeeb625b2b5c30eab91"
+    },
+    "writing-for-agents": {
+      "source": "mattpocock/skills",
+      "commit": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/writing-for-agents/SKILL.md",
+      "computedHash": "e79a2476b2417b228922453478d9505a6b9af19f3a412e560728ce62ed3555ca"
+    }
+  }
+}

@@ -4,7 +4,7 @@ A runbook for standing up a fresh Mac with this stack. Hand this to Claude Code 
 
 ## Automated vs manual
 
-- **Automated** by `mise run install`: Homebrew + base Brewfile apps, mise tools, dotfile symlinks, AI stack, nvim, and cloning the `wiki`/`skills` repos.
+- **Automated** by `mise run install`: Homebrew + base Brewfile apps, mise tools, dotfile symlinks, AI stack, nvim, cloning the `wiki`/`skills` repos, and every agent skill and plugin in `packages/ai/skills.json`.
 - **Manual** (trust boundaries — credentials never live in a public repo): signing into 1Password, `gh` auth, filling the work git identity, recreating machine-local config.
 
 ## Steps
@@ -26,10 +26,20 @@ gh-personal; gh auth login     # scalvert (personal)
 gh-work;     gh auth login      # work account
 ```
 
-### 4. Pull the stack (if install didn't already)
+### 4. Pull the stack
+The first `mise run install` runs before `gh` is signed in, so it cannot clone the private `wiki` repo. Run this once step 3 is done:
 ```sh
 mise run stack:install          # clones wiki + skills into ~/workspace/personal
 ```
+
+### 4a. Agent skills and plugins (if install didn't finish them)
+```sh
+mise run ai:skills:install      # all skills, plus Claude Code and Codex plugins
+mise run ai:skills:status       # what is missing, what is not declared
+```
+The plugin step needs `claude` and `codex` on `PATH`. The Brewfile installs both. If either was missing during install, install it and run the task again.
+
+The Plannotator skills call the `plannotator` CLI, which has no Homebrew formula. Install it from <https://plannotator.ai>.
 
 ### 5. Work machine only — extra apps + work identity
 ```sh
