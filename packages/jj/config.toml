@@ -31,25 +31,10 @@ key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG90UNRupC9GKqqXL8/5TZ3mQAE6lzN4517Is
 [signing.backends.ssh]
 program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 
-[[--scope]]
---when.repositories = [
-  "~/src/github/gleanwork/",
-  "~/src/github/askscio/",
-  "~/src/github/robert-jackson-glean/",
-  "~/src/github/rwjblue/dotfiles/local-packages/",
-]
-
-[--scope.user]
-email = "robert.jackson@glean.com"
-
-[--scope.signing]
-key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINnJAefwOOhSTp/bxJjFJXVluHPG7hMjgLCVqBZ/YlAW"
-
 # Configuration for repositories where I push directly to trunk() (e.g. personal dotfiles)
 [[--scope]]
 --when.repositories = [
   "~/src/github/rwjblue/",
-  "~/src/github/robert-jackson-glean/",
 ]
 
 [[--scope]]

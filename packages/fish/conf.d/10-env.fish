@@ -27,24 +27,13 @@ switch (uname)
         end
 end
 
-# Workspace paths (customize these in local.fish if needed)
-if test -d $HOME/workspace/scio
-    set -gx SCIO_ROOT $HOME/workspace/scio
-    set -gx DEVDOCK_ROOT $HOME/workspace/scio
-    if not contains -- $HOME/workspace/scio $PATH
-        set -gx PATH $HOME/workspace/scio $PATH
-    end
-end
+# Employer-specific paths, cloud projects and account names belong in
+# local.fish (see local.fish.template), not here. This repo is public.
 
 set -l node_extra_ca_cert "$HOME/certificates/rootCA.pem"
 if test -f $node_extra_ca_cert
     set -gx NODE_EXTRA_CA_CERTS $node_extra_ca_cert
 end
-
-# Claude/Vertex AI (non-secret config)
-set -gx CLAUDE_CODE_USE_VERTEX 1
-set -gx CLOUD_ML_REGION us-east5
-set -gx ANTHROPIC_VERTEX_PROJECT_ID dev-sandbox-334901
 
 # Homebrew completions
 if test -d /opt/homebrew/share/fish/completions

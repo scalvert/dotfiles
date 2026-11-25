@@ -62,7 +62,7 @@ holds personal preferences only. Rules a repo needs belong in that repo's
 ```bash
 mise run ai:generate:instructions       # write generated/instructions/<client>/
 mise run ai:install:instructions:dry-run
-mise run ai:install:instructions        # ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md, ~/.glean/agent/AGENTS.md
+mise run ai:install:instructions        # ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md
 mise run ai:check:instructions          # exit 1 on drift
 ```
 
