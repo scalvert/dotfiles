@@ -6,3 +6,9 @@
 if test -f ~/.config/fish/local.fish
     source ~/.config/fish/local.fish
 end
+
+# Entire CLI shell completion. Guarded so a machine without the CLI still
+# starts a shell without an error.
+if type -q entire
+    entire completion fish | source
+end

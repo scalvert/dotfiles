@@ -82,4 +82,7 @@ EVAL-CHECKLIST.md
 .omc/
 
 # Skill Creator Eval Workspaces #
-*-workspace/
+# Only the eval output skill-creator writes into <skill-name>-workspace/,
+# so ordinary folders that happen to end in -workspace stay tracked.
+**/*-workspace/iteration-*/
+**/*-workspace/skill-snapshot/
