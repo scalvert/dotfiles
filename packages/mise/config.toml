@@ -4,33 +4,12 @@
 min_version = "2025.3.1"
 
 [tools]
-# cargo augmenting tools
-cargo-binstall = "latest"
-cargo-insta = "latest"
-"cargo:cargo-nextest" = "latest"
-"cargo:cargo-edit" = "latest"
-
-# software verification (see https://mise.jdx.dev/tips-and-tricks.html#software-verification)
-slsa-verifier = "latest"
-cosign = "latest"
-
-# provides completion and parsing support for tasks see:
-# https://mise.jdx.dev/tasks/file-tasks.html#arguments
-usage = "latest"
-
-# useful global tools
-"npm:mcp-hub" = "latest"
-"npm:@mermaid-js/mermaid-cli" = "latest"
-
 # core tools
 go = "latest"
 node = "latest"
 python = "latest"
-ruby = "latest"
 rust = { version = "latest", components = "rust-analyzer,clippy" }
 uv = "latest"
-zig = "latest"
-"go:github.com/spf13/cobra-cli" = "latest"
 
 [settings]
 experimental = true

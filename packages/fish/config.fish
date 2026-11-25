@@ -13,3 +13,9 @@ end
 if functions -q __gh_set_config_dir
     __gh_set_config_dir
 end
+
+# Entire CLI shell completion. Guarded so a machine without the CLI still
+# starts a shell without an error.
+if type -q entire
+    entire completion fish | source
+end
