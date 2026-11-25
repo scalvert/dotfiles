@@ -4,6 +4,7 @@ Canonical reusable skill source belongs here. Tool-specific installed skill fold
 
 Current policy:
 
+- Declare every installed skill and plugin in `../skills.json`. `mise run ai:skills:install` installs them all. See `docs/ai-stack.md`.
 - Keep managed external bundles tracked by lock metadata.
 - Consolidate custom Plannotator skills into one source package before deleting duplicates.
 - Keep Cursor built-ins Cursor-managed.
